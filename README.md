@@ -13,7 +13,7 @@ MyDFS è un filesystem distribuito scritto in Java, la cui architettura è ispir
 
 1) nella cartella "installation" eseguire "sudo ./serverSetup.sh"
 
-
+Questa procedura va ripetuta per ogni macchina che si vuole inserire nel file-system distribuito
 
 
 
