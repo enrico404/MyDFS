@@ -1,0 +1,4 @@
+Mostra i nodi a cui il serverManager è attualmente connesso.
+
+Uso:
+	sview

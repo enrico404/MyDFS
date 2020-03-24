@@ -1,0 +1,10 @@
+Resistituisce i file nella directory corrente
+
+Uso:
+	ls
+
+Opzioni:
+	-a -> per calcolare anche la dimensione delle directory
+
+Uso:
+	ls -a

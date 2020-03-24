@@ -1,0 +1,35 @@
+Modalità di sviluppo
+
+Per ogni nodo
+	1) crea una cartella nella tua home chiamata "shDir"
+
+Attenzione: il nome dell'utente deve essere lo stesso per tutti quanti i nodi
+
+
+
+Istruzioni per utilizzo/compilazione:
+
+Server:
+	- apri un terminale e spostati nella cartella src
+	- avvia rmiregistry
+	- apri un altro terminale e spostati in src
+	- esegui: java -Djava.security.policy=./perm.policy Server/ServerClass
+
+serverManager:
+	- avvia rmregistry se non è già stato avviato
+	- apri un terminale in src ed esegui: java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>
+
+
+
+Client: 
+	- apri un terminale e spostati nella cartella src
+	- esegui: java Client.ClientClass //<serverManager_ip>/ServerManager
+
+
+
+
+Per compilare: 
+	- apri un terminale in src
+	- esegui: javac Server/ServerInterface.java Server/ServerClass.java Client/ClientClass.java Server/ServerManagerInterface.java Server/ServerManager.java utils/utils.java utils/MyFileType.java utils/ConsoleColors.java  
+ 
+

@@ -1,0 +1,7 @@
+Verifica la disponibilità del cluster
+
+Uso:
+	du
+
+Opzioni:
+	-h : modalità human readable

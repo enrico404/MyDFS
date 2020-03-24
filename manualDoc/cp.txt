@@ -1,0 +1,13 @@
+copia un file locale nel filesystem distribuito
+
+Uso:
+	cp <path_to_file> <file_system_path>
+
+Opzioni:
+	-rm -> copia un file da filesystem distribuito a locale
+	-r -> per la copia ricorsiva di directory
+
+Uso:
+	cp -rm <remote_file_path> <local_path>
+	cp -r <path_to_dir> <file_system_path>
+	cp -r -rm <remote_dir_path> <local_path>

@@ -1,0 +1,4 @@
+Muove file/directory all'interno del file system distribuito.
+
+Uso:
+	mv <path to source file/dir> </path to destination directory>

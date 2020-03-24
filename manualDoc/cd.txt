@@ -1,0 +1,4 @@
+Cambia la directory corrente
+
+Uso:
+	cd <dir_name>

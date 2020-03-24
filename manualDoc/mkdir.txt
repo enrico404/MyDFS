@@ -1,0 +1,6 @@
+Crea una directory nel file system distribuito.
+
+Uso:
+	mkdir DIRECTORY_NAME..
+
+
