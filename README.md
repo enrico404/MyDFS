@@ -11,7 +11,7 @@ MyDFS è un filesystem distribuito scritto in Java, la cui architettura è ispir
 
 ## Installazione:
 
-1) nella cartella "installation" eseguire "sudo serverSetup.sh"
+1) nella cartella "installation" eseguire "sudo ./serverSetup.sh"
 
 
 
@@ -37,6 +37,8 @@ Per il nodo dedicato alla gestione dei vari Data nodes è necessario eseguire i 
 ### ServerManager:
 
 NB: se il nodo è già avviato come "Data node" saltare i passi 1 e 2
+
+
 	1) apri un terminale nella directory "run/serverManager"
 	2) eseguire ./serverManager_init.sh
 	3) apri un altro terminale nella directory "run/serverManager"
