@@ -1,19 +1,40 @@
 # Introduzione
 
-MyDFS è un filesystem distribuito scritto in Java, la cui architettura è ispirata a quella di Hadoop nella sua prima versione. Il sistema ha quindi una grandissima scalabilità orrizzontale ed è fault tollerance.
+MyDFS è un filesystem distribuito scritto in Java la cui architettura è ispirata a quella di Hadoop nella sua prima versione. Il sistema presenta quindi una grandissima scalabilità orrizzontale.
 
 # Architettura
 
-...
+Il sistema presenta tre tipologie di macchine:
 
+	1) Data node (ServerClass): nodo che si occupa della gestione di file. È coordinato dal ServerManager
+	2) ServerManger: è il nodo che coordina i vari Data nodes e che comunica direttamente con il client
+	3) Client (ClientClass): è il processo client del sistema
+
+
+![Alt text](./Img/ArchitetturaMyDFS.jpg)
+
+
+
+Client e Server in realtà sono tutte maccchine connesse alla stessa rete locale e non fisicamente collegate tra di loro come nello schema soprastante.
+Viene tuttavia creata una rete virtuale com'è rappresentata nell'immagine.
+
+NB: il sistema è in grado di gestire più client contemporaneamente
+
+
+Maggiori informazioni nella [documentazione](./Documentation/index.html)
 
 # Istruzioni per l'uso
 
 ## Installazione:
 
-1) nella cartella "installation" eseguire "sudo ./serverSetup.sh"
+1) nella cartella "installation" aprire un terminale ed eseguire "sudo ./serverSetup.sh"
 
 Questa procedura va ripetuta per ogni macchina che si vuole inserire nel file-system distribuito
+
+
+## Procedura di reinstallazione
+
+1) nella cartella "installation" aprire un terminale ed eseguire "sudo ./reinstall.sh"
 
 
 
@@ -56,3 +77,4 @@ Ora un qualsiasi host connesso alla stessa rete locale può diventare un potenzi
 
 	1) eseguire ./client_run.sh <ip_serverManager> 
 	
+
