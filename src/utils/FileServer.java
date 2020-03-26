@@ -74,11 +74,11 @@ public class FileServer {
                 out.flush();
 
             }catch (FileNotFoundException e){
-                System.out.println("Path di destinazione errato!");
+                System.err.println(ConsoleColors.RED+"Path di destinazione errato!"+ConsoleColors.RESET);
 
             }
             catch (IOException e){
-                System.out.println("Errore nel socket del server");
+                System.err.println(ConsoleColors.RED+"Errore nel socket del server"+ConsoleColors.RESET);
             }finally {
                 if(in != null){
                     try {

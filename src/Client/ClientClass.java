@@ -163,7 +163,7 @@ public class ClientClass implements Serializable{
         for(String path: paths){
             //se fallisce la cancellazione
             if(!(ser.rm_func_rec(currentPath+'/'+path))){
-                System.out.println("Fallita l'eliminazione di "+ path);
+                System.err.println("Fallita l'eliminazione di "+ path);
                 return false;
             }
             System.out.println(""+path+" eliminato con successo!");
@@ -233,7 +233,7 @@ public class ClientClass implements Serializable{
                 //recursiveCopy_remote(path1, path2, slave);
                 recursiveCopy_remote(path1, path2, ser);
             }else {
-                System.out.println(ConsoleColors.RED+"la directory \""+ utils.getFileName(path1)+ "\" non esiste!"+ConsoleColors.RESET);
+                System.err.println(ConsoleColors.RED+"la directory \""+ utils.getFileName(path1)+ "\" non esiste!"+ConsoleColors.RESET);
             }
             //}
 
@@ -266,7 +266,7 @@ public class ClientClass implements Serializable{
 
 
             }else {
-                System.out.println(ConsoleColors.RED+"Il file \""+utils.getFileName(path1)+"\" non esiste"+ConsoleColors.RESET);
+                System.err.println(ConsoleColors.RED+"Il file \""+utils.getFileName(path1)+"\" non esiste"+ConsoleColors.RESET);
                 return false;
             }
 
@@ -407,7 +407,7 @@ public class ClientClass implements Serializable{
 //                    }
                         String path = param[1];
                         if (!(client.cd_func(ser, path))) {
-                            System.out.println(ConsoleColors.RED+"La directory \"" + path + "\" non esiste!"+ConsoleColors.RESET);
+                            System.err.println(ConsoleColors.RED+"La directory \"" + path + "\" non esiste!"+ConsoleColors.RESET);
                         }
                     }
                     else if (ins.startsWith("rm")){
@@ -420,8 +420,8 @@ public class ClientClass implements Serializable{
                             }
 
                             if (!(client.rm_func(ser, paths))) {
-                                System.out.println(ConsoleColors.RED+"Uno dei file \"" + paths + "\" non esiste oppure è una directory!"+ConsoleColors.RESET);
-                                System.out.println("(Per cancellare le directory usa l'opzione -rf )");
+                                System.err.println(ConsoleColors.RED+"Uno dei file \"" + paths + "\" non esiste oppure è una directory!"+ConsoleColors.RESET);
+                                System.err.println("(Per cancellare le directory usa l'opzione -rf )");
                             }
                         }else {
                             if (utils.contains(param, "-rf", 1)){
@@ -432,7 +432,7 @@ public class ClientClass implements Serializable{
                                 }
 
                                 if (!(client.rm_func_rec(ser, paths))) {
-                                    System.out.println(ConsoleColors.RED+"Errore nella cancellazione"+ConsoleColors.RESET);
+                                    System.err.println(ConsoleColors.RED+"Errore nella cancellazione"+ConsoleColors.RESET);
 
                                 }
 
@@ -462,9 +462,9 @@ public class ClientClass implements Serializable{
                                param[2] = param[2]+"/"+fileName;
                            }
                             if (!(client.cp_func(ser, param[1], param[2]))) {
-                                System.out.println(ConsoleColors.RED+"Errore nella copia del file!"+ConsoleColors.RESET);
+                                System.err.println(ConsoleColors.RED+"Errore nella copia del file!"+ConsoleColors.RESET);
                             }
-                            System.out.println("");
+                            System.err.println("");
 
                         }
                         // casi: slave->client oppure client(directory)->server
@@ -493,9 +493,9 @@ public class ClientClass implements Serializable{
                                 ArrayList<String> options = new ArrayList<String>();
                                 options.add(param[1]);
                                 if (!(client.cp_func(ser, param[2], param[3], options))) {
-                                    System.out.println(ConsoleColors.RED+"Errore nella copia del file!"+ConsoleColors.RESET);
+                                    System.err.println(ConsoleColors.RED+"Errore nella copia del file!"+ConsoleColors.RESET);
                                 }
-                                System.out.println("");
+                                System.err.println("");
                             }
 
                         }
@@ -505,7 +505,7 @@ public class ClientClass implements Serializable{
                             param[4] = utils.cleanString(param[4], client);
 
                             if(!(param[4].startsWith("/"))){
-                                System.out.println("Devi specificare un path assoluto sul client!");
+                                System.err.println(ConsoleColors.RED+"Devi specificare un path assoluto sul client!"+ConsoleColors.RESET);
                                 continue;
                             }else {
                                 String[] tmp =  param[3].split("/");
@@ -522,13 +522,13 @@ public class ClientClass implements Serializable{
                                 options.add(param[1]);
                                 options.add(param[2]);
                                 if (!(client.cp_func(ser, param[3], param[4], options))) {
-                                    System.out.println(ConsoleColors.RED+"Errore nella copia del file!"+ConsoleColors.RESET);
+                                    System.err.println(ConsoleColors.RED+"Errore nella copia del file!"+ConsoleColors.RESET);
                                 }
-                                System.out.println("");
+                                System.err.println("");
                             }
                         }
                         else {
-                            System.out.println(ConsoleColors.RED+"Errore nella sintassi del comando! Digita 'help cp' per vedere la sintassi del comando"+ConsoleColors.RESET);
+                            System.err.println(ConsoleColors.RED+"Errore nella sintassi del comando! Digita 'help cp' per vedere la sintassi del comando"+ConsoleColors.RESET);
                         }
 
                     }
@@ -550,13 +550,13 @@ public class ClientClass implements Serializable{
                         String loc2 = ser.getFileLocation(param[2]);
                         boolean exists = true;
                         if (loc1 == null){
-                            System.out.println(ConsoleColors.RED+"Il file/directory "+param[1]+ " non esiste! "+ConsoleColors.RESET);
-                            System.out.println("");
+                            System.err.println(ConsoleColors.RED+"Il file/directory "+param[1]+ " non esiste! "+ConsoleColors.RESET);
+                            System.err.println("");
                             exists = false;
                         }
                         if (loc2 == null){
-                            System.out.println(ConsoleColors.RED+"la directory "+param[2]+ " non esiste! "+ConsoleColors.RESET);
-                            System.out.println("");
+                            System.err.println(ConsoleColors.RED+"la directory "+param[2]+ " non esiste! "+ConsoleColors.RESET);
+                            System.err.println("");
                             exists = false;
                         }
                         if(exists)
@@ -605,7 +605,7 @@ public class ClientClass implements Serializable{
                         exit = true;
                     }
                     else {
-                        System.out.println(ConsoleColors.RED+"Il comando digitato non esiste!"+ConsoleColors.RESET);
+                        System.err.println(ConsoleColors.RED+"Il comando digitato non esiste!"+ConsoleColors.RESET);
                     }
                 }
 
@@ -622,7 +622,7 @@ public class ClientClass implements Serializable{
                 e.printStackTrace();
             }
         }else{
-            System.out.println(ConsoleColors.RED+"Formato del comando non valido!"+ConsoleColors.RESET);
+            System.err.println(ConsoleColors.RED+"Formato del comando non valido!"+ConsoleColors.RESET);
         }
 
     }

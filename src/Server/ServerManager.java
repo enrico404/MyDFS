@@ -5,6 +5,7 @@ import utils.MyFileType;
 import utils.utils;
 import java.io.File;
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.rmi.Naming;
@@ -14,6 +15,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import utils.FileClient;
 /**
@@ -291,7 +293,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             }
 
         }
-        System.out.println("Cancellazione del file fallita!");
+        System.err.println("Cancellazione del file fallita!");
         return false;
     }
 
@@ -313,7 +315,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
         }
         if(err_canc == true) {
-            System.out.println("Cancellazione fallita!");
+            System.err.println("Cancellazione fallita!");
             return false;
         }else
             return true;
@@ -483,7 +485,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //            }
             //casi impossibili da gestire: file -> file e  dir -> file
             else {
-                System.out.println("Errore nella sintassi del comando");
+                System.err.println("Errore nella sintassi del comando");
                 return false;
 
             }
@@ -611,18 +613,22 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         }
 
         try{
-            String myIp = utils.getInet4Addresses().get(0).toString().substring(1);
-            System.setProperty("java.rmi.server.hostname", myIp);
-            ServerManager serM = new ServerManager("ServerManager", ipArr);
-            Naming.rebind("//"+myIp+"/ServerManager", serM);
-            System.out.println();
-            System.out.println("ServerManager bindato nel registry");
-            System.out.println("Indirizzo ip bindato: "+ myIp);
-            serM.selShared_dir(System.getProperty("user.home")+"/shDir"); //è la directory condivisa dei dataServer, deve essere uguale per tutti
-            //connetto il serverManger ai vari dataServer specificati
-            serM.connectToDataServers();
-            //serM.balance();
-
+            List<Inet4Address> ips = utils.getInet4Addresses();
+            if(ips.size() >= 1 ) {
+                String myIp = ips.get(0).toString().substring(1);
+                System.setProperty("java.rmi.server.hostname", myIp);
+                ServerManager serM = new ServerManager("ServerManager", ipArr);
+                Naming.rebind("//" + myIp + "/ServerManager", serM);
+                System.out.println();
+                System.out.println("ServerManager bindato nel registry");
+                System.out.println("Indirizzo ip bindato: " + myIp);
+                serM.selShared_dir(System.getProperty("user.home") + "/shDir"); //è la directory condivisa dei dataServer, deve essere uguale per tutti
+                //connetto il serverManger ai vari dataServer specificati
+                serM.connectToDataServers();
+                //serM.balance();
+            }else {
+                    System.err.println("Non sei connesso ad una rete locale");
+                }
         }catch(Exception e){
             e.printStackTrace();
         }

@@ -1,4 +1,4 @@
 #!/bin/sh
 
-cd ../../src/
+cd ../../out/
 java Client.ClientClass //$1/ServerManager

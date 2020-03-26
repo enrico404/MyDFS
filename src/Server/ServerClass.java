@@ -5,6 +5,9 @@ import utils.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -13,6 +16,7 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import utils.FileClient;
 import utils.FileServerThread;
@@ -148,7 +152,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
             }
         }
         else {
-            System.out.println("Directory condivisa non settata correttamente");
+            System.err.println("Errore nella condivisione della directory");
         }
         return result;
     }
@@ -187,7 +191,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
                 }
             } else {
-                System.out.println(ConsoleColors.RED+"Directory condivisa non settata correttamente"+ConsoleColors.RESET);
+                System.err.println("Errore nella condivisione della directory");
             }
         }else {
 
@@ -209,7 +213,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                 }
             }
             else {
-                System.out.println("Directory condivisa non settata correttamente");
+                System.err.println("Errore nella condivisione della directory");
             }
 
         }
@@ -260,7 +264,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
         }
         else {
-            System.out.println("Il file "+path+" non esiste!");
+            System.err.println("Il file "+path+" non esiste!");
         }
         return false;
     }
@@ -427,23 +431,28 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         }
 
         try{
-            String myIp = utils.getInet4Addresses().get(0).toString().substring(1);
-            System.setProperty("java.rmi.server.hostname", myIp);
-            System.out.println("Inserisci il nome del server: ");
-            Scanner in = new Scanner(System.in);
-            String name = in.nextLine();
-            ServerClass ser = new ServerClass(name);
-            Naming.rebind("//"+myIp+"/"+name, ser);
-            System.out.println();
-            System.out.println(name+" bindato nel registry");
-            System.out.println("Indirizzo ip bindato: "+ myIp);
-            ser.selShared_dir(System.getProperty("user.home")+"/shDir");
+            List<Inet4Address> ips = utils.getInet4Addresses();
+            if(ips.size() >= 1 ) {
+                String myIp = ips.get(0).toString().substring(1);
+                System.setProperty("java.rmi.server.hostname", myIp);
+                System.out.println("Inserisci il nome del server: ");
+                Scanner in = new Scanner(System.in);
+                String name = in.nextLine();
+                ServerClass ser = new ServerClass(name);
+                Naming.rebind("//" + myIp + "/" + name, ser);
+                System.out.println();
+                System.out.println(name + " bindato nel registry");
+                System.out.println("Indirizzo ip bindato: " + myIp);
+                ser.selShared_dir(System.getProperty("user.home") + "/shDir");
 
 //            ArrayList<MyFileType> res = ser.ls_func(ser.getSharedDir(), true);
 //            for(MyFileType f:res){
 //                System.out.println("Name: "+f.getName());
 //                System.out.println("Size: "+ f.getSize());
 //            }
+            }else {
+                System.err.println("Non sei connesso ad una rete locale");
+            }
         }catch(Exception e){
             e.printStackTrace();
         }

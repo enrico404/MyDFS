@@ -12,24 +12,34 @@ Istruzioni per utilizzo/compilazione:
 Server:
 	- apri un terminale e spostati nella cartella src
 	- avvia rmiregistry
-	- apri un altro terminale e spostati in src
-	- esegui: java -Djava.security.policy=./perm.policy Server/ServerClass
+	- apri un altro terminale e spostati in out
+	- esegui:
+
+	java -Djava.security.policy=./perm.policy Server/ServerClass
 
 serverManager:
 	- avvia rmregistry se non è già stato avviato
-	- apri un terminale in src ed esegui: java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>
+	- apri un terminale in out ed esegui:
+
+	java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>
 
 
 
 Client: 
 	- apri un terminale e spostati nella cartella src
-	- esegui: java Client.ClientClass //<serverManager_ip>/ServerManager
+	- esegui:
+
+	java Client.ClientClass //<serverManager_ip>/ServerManager
 
 
 
 
 Per compilare: 
 	- apri un terminale in src
-	- esegui: javac Server/ServerInterface.java Server/ServerClass.java Client/ClientClass.java Server/ServerManagerInterface.java Server/ServerManager.java utils/utils.java utils/MyFileType.java utils/ConsoleColors.java  
+	- esegui:
+
+	javac -d ../out/ Server/ServerInterface.java Server/ServerClass.java Client/ClientClass.java Server/ServerManagerInterface.java Server/ServerManager.java utils/utils.java utils/MyFileType.java utils/ConsoleColors.java
  
 
+ATTENZIONE:
+    il file perm.policy deve trovarsi una cartella indietro dei file binari (c'è una copia di questo file nella carrtella src)
