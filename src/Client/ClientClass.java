@@ -102,6 +102,7 @@ public class ClientClass implements Serializable{
         return  false;
     }
 
+
     /**
      * Metodo per spostarsi all'interno del filesystem del cluster. È ispirato al comando "cd" di Linux.
      * @param ser riferimento al nodeManger del cluster
@@ -195,6 +196,7 @@ public class ClientClass implements Serializable{
         fc.send(localPath);
         return true;
     }
+
 
     /**
      * Overloading della funzione cp_func, va a gestire anche i seguenti casi di copia:
@@ -334,6 +336,56 @@ public class ClientClass implements Serializable{
 
     }
 
+
+    /**
+     * Metodo per la stampa su standard output i nodi a cui il serverManager è attualmente connesso
+     * @param ser Riferimento al serverManager
+     * @throws RemoteException
+     */
+    public void sview_func(ServerManagerInterface ser) throws RemoteException, SocketException {
+        System.out.println("Sono connesso con i seguenti data nodes: ");
+        System.out.println("");
+        for(ServerInterface slave: ser.getSlaveServers()){
+            System.out.println("Name: "+slave.getName()+ " |  ip: "+slave.getIp());
+            System.out.println(ConsoleColors.CYAN+"Spazio disponibile: "+slave.getFreeSpace()+ConsoleColors.RESET);
+        }
+        System.out.println("");
+    }
+
+
+    /**
+     * Metodo che stampa su standard output informazioni utili riguardo il cluster, come ad esempio la capacità e lo spazio
+     * disponibile
+     * @param param parametri opzionali in ingresso
+     * @param ser riferimento al serverManager
+     * @throws RemoteException
+     */
+    public void du_func(String [] param, ServerManagerInterface ser) throws RemoteException {
+        if(param.length == 1){
+            System.out.println("");
+            System.out.println(ConsoleColors.CYAN+"Capacità disponibile del cluster: " + ser.getFreeSpace());
+            System.out.println("Capacità massima del cluster: " + ser.getClusterCapacity());
+            System.out.println("");
+            float perc = (ser.getFreeSpace()*100)/(float)ser.getClusterCapacity();
+            System.out.println("Spazio disponibile in percentuale: "+ perc+"%"+ConsoleColors.RESET);
+            System.out.println("");
+        }
+        else if(param.length == 2) {
+            if (param[1].equals("-h")) {
+                float gb_divisor = 1024*1024*1024;
+                float freeSpace_h = ser.getFreeSpace() / gb_divisor;
+                float clusterSpace_h = ser.getClusterCapacity() / gb_divisor;
+                System.out.println("");
+                System.out.println(ConsoleColors.CYAN+"Capacità disponibile del cluster: " + freeSpace_h + " GB");
+                System.out.println("Capacità massima del cluster: " + clusterSpace_h + " GB");
+                System.out.println("");
+                float perc = (freeSpace_h*100)/clusterSpace_h;
+                System.out.println("Spazio disponibile in percentuale: "+ perc+"%"+ConsoleColors.RESET);
+                System.out.println("");
+            }
+        }
+    }
+
     /**
      * Metodo che gestisce l'help dei vari comandi. Fa uso della classe "Helper" per la gestione del manuale dei vari comandi
      * @param param contiene il nome del comando per cui si vuole chiamare l'help
@@ -362,6 +414,9 @@ public class ClientClass implements Serializable{
     }
 
 
+
+
+
     /**
      * Main della classe "ClientCLass" gestisce l'input dei vari comandi e va a richiamare i metodi relativi gestiti dalla
      * classe CLientClass
@@ -385,6 +440,8 @@ public class ClientClass implements Serializable{
                     System.out.print('>');
                     Scanner in = new Scanner(System.in);
                     String ins = in.nextLine();
+
+
                     if (ins.startsWith("ls")) {
                         String[] param = ins.split(" ");
                         if(param.length == 2){
@@ -396,10 +453,14 @@ public class ClientClass implements Serializable{
                             client.ls_func(ser, false);
                         }
                     }
+
+
                     else if (ins.startsWith("help")) {
                         String[] param = ins.split(" ");
                         client.help(param);
                     }
+
+
                     else if (ins.startsWith("cd")) {
                         String[] param = ins.split(" ");
 //                    for(int i=0; i<param.length; i++){
@@ -410,6 +471,8 @@ public class ClientClass implements Serializable{
                             System.err.println(ConsoleColors.RED+"La directory \"" + path + "\" non esiste!"+ConsoleColors.RESET);
                         }
                     }
+
+
                     else if (ins.startsWith("rm")){
                         String[] param = ins.split(" ");
                         if (!(param[1].startsWith("-"))) {
@@ -440,6 +503,8 @@ public class ClientClass implements Serializable{
 
                         }
                     }
+
+
                     else if (ins.startsWith("cp")){
                         String[] param = ins.split(" ");
 
@@ -533,6 +598,8 @@ public class ClientClass implements Serializable{
 
                     }
 
+
+
                     else if (ins.startsWith("mkdir")){
                         String[] param = ins.split(" ");
 
@@ -541,6 +608,8 @@ public class ClientClass implements Serializable{
                         }
 
                     }
+
+
 
                     else if (ins.startsWith("mv")){
                         String[] param = ins.split(" ");
@@ -564,40 +633,15 @@ public class ClientClass implements Serializable{
 
                     }
 
+
+
                     else if (ins.startsWith("du")){
                         String[] param = ins.split(" ");
-                        if(param.length == 1){
-                            System.out.println("");
-                            System.out.println(ConsoleColors.CYAN+"Capacità disponibile del cluster: " + ser.getFreeSpace());
-                            System.out.println("Capacità massima del cluster: " + ser.getClusterCapacity());
-                            System.out.println("");
-                            float perc = (ser.getFreeSpace()*100)/(float)ser.getClusterCapacity();
-                            System.out.println("Spazio disponibile in percentuale: "+ perc+"%"+ConsoleColors.RESET);
-                            System.out.println("");
-                        }
-                        else if(param.length == 2) {
-                            if (param[1].equals("-h")) {
-                                float gb_divisor = 1024*1024*1024;
-                                float freeSpace_h = ser.getFreeSpace() / gb_divisor;
-                                float clusterSpace_h = ser.getClusterCapacity() / gb_divisor;
-                                System.out.println("");
-                                System.out.println(ConsoleColors.CYAN+"Capacità disponibile del cluster: " + freeSpace_h + " GB");
-                                System.out.println("Capacità massima del cluster: " + clusterSpace_h + " GB");
-                                System.out.println("");
-                                float perc = (freeSpace_h*100)/clusterSpace_h;
-                                System.out.println("Spazio disponibile in percentuale: "+ perc+"%"+ConsoleColors.RESET);
-                                System.out.println("");
-                            }
-                        }
+                        client.du_func(param, ser);
                     }
 
                     else if(ins.equals("sview")){
-                        System.out.println("Sono connesso con i seguenti data nodes: ");
-                        System.out.println("");
-                        for(ServerInterface slave: ser.getSlaveServers()){
-                            System.out.println("Name: "+slave.getName()+ " |  ip: "+slave.getIp());
-                            System.out.println(ConsoleColors.CYAN+"Spazio disponibile: "+slave.getFreeSpace()+ConsoleColors.RESET);
-                        }
+                        client.sview_func(ser);
 
                     }
 

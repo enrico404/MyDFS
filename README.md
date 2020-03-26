@@ -25,6 +25,12 @@ Maggiori informazioni nella [documentazione](./Documentation/index.html)
 
 # Istruzioni per l'uso
 
+## Dipendeze
+
+- java
+
+NB: il software è stato testato e sviluppato su Linux, l'esecuzione corretta su altri sistemi operativi non è garantita!
+
 ## Installazione:
 
 1) nella cartella "installation" aprire un terminale ed eseguire "sudo ./serverSetup.sh"
