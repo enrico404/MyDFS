@@ -74,16 +74,25 @@ public class ClientClass implements Serializable{
      * @param dirCapacity flag per indicare se si vuole anche calcolare la capacità delle directory o meno
      * @throws RemoteException
      */
-    public void ls_func(ServerManagerInterface ser, boolean dirCapacity) throws RemoteException {
+    public void ls_func(ServerManagerInterface ser, boolean dirCapacity, boolean verbose) throws RemoteException {
         ArrayList<MyFileType> res = ser.ls_func(currentPath, dirCapacity);
         System.out.println("");
         for(MyFileType file: res ){
-            if(file.getType().equals("File"))
-                System.out.println(file.getName()+"     | Type: "+ file.getType() + "     | Size (bytes): "+ file.getSize()+ " | location: "+ file.getLocation());
-            else
-                System.out.println(ConsoleColors.GREEN +file.getName()+ ConsoleColors.RESET+"     | Type: "+ file.getType() + "     | Size (bytes): "+ file.getSize()+ " | location: - ");
+            if(file.getType().equals("File")) {
+                if(verbose)
+                    System.out.println(file.getName() + "     | Type: " + file.getType() + "     | Size (bytes): " + file.getSize() + " | location: " + file.getLocation());
+                else
+                    System.out.print(file.getName()+"   ");
+            }
+            else {
+                if(verbose)
+                    System.out.println(ConsoleColors.GREEN + file.getName() + ConsoleColors.RESET + "     | Type: " + file.getType() + "     | Size (bytes): " + file.getSize() + " | location: - ");
+                else
+                    System.out.print(ConsoleColors.GREEN + file.getName()+"   " + ConsoleColors.RESET);
+            }
         }
-        System.out.println();
+        System.out.println("");
+        System.out.println("");
     }
 
     /**
@@ -458,6 +467,9 @@ public class ClientClass implements Serializable{
             System.out.println("open: apri un file del filesystem distribuito");
             System.out.println("exit: serve per smontare il cluster dal sistema");
             System.out.println();
+            System.out.println();
+            System.out.println("Digita 'help <command_name>' per ottenere l'aiuto in linea del comando");
+            System.out.println();
         }else {
             Helper helper = new Helper();
             helper.print(param[1]);
@@ -497,12 +509,22 @@ public class ClientClass implements Serializable{
                         String[] param = ins.split(" ");
                         if(param.length == 2){
                             if(param[1].equals("-a")){
-                                client.ls_func(ser, true);
+                                client.ls_func(ser, false, true);
                             }
+                            else if(param[1].equals("-d")){
+                                client.ls_func(ser, true, false);
+                            }
+
+                        }
+                        else if(param.length == 3) {
+                            if((param[1].equals("-a") && param[2].equals("-d") )|| (param[2].equals("-a") && param[1].equals("-d") ))
+                                client.ls_func(ser, true, true);
                         }
                         else {
-                            client.ls_func(ser, false);
+                            //comportamento di default senza parametri
+                            client.ls_func(ser, false, false);
                         }
+
                     }
 
 
@@ -568,19 +590,16 @@ public class ClientClass implements Serializable{
                         if(param.length == 3) {
                             param[1] = utils.cleanString(param[1], client);
                             param[2] = utils.cleanString(param[2], client);
-                           if(param[2].equals(".")){
+                            String[] tmp =  param[1].split("/");
+                            String lastEl = tmp[tmp.length-1];
+                            String fileName =  lastEl.substring(0, lastEl.length());
+                            if(param[2].equals(".")){
                                //se il secondo parametro è un . devo creare un file sul server con lo stesso nome
-                               String[] tmp =  param[1].split("/");
-                               String lastEl = tmp[tmp.length-1];
-                               String fileName =  lastEl.substring(0, lastEl.length());
-                               param[2] = client.getCurrentPath()+"/"+fileName;
+                                param[2] = client.getCurrentPath()+"/"+fileName;
                            }
                            else{
                                // caso in cui il secondo parametro è il path assoluto alla cartella
-                               String[] tmp =  param[1].split("/");
-                               String lastEl = tmp[tmp.length-1];
-                               String fileName =  lastEl.substring(0, lastEl.length());
-                               if(!was_relative)
+                                if(!was_relative)
                                    param[2] = param[2]+"/"+fileName;
                            }
                           // System.out.println("passo i parametri :"+param[1]+" "+ param[2]);
@@ -595,15 +614,12 @@ public class ClientClass implements Serializable{
                             param[2] = utils.cleanString(param[2], client);
                             param[3] = utils.cleanString(param[3], client);
 
+                            String[] tmp =  param[2].split("/");
+                            String lastEl = tmp[tmp.length-1];
+                            String dirName =  lastEl.substring(0, lastEl.length());
                             if(param[3].equals(".")){
-                                String[] tmp =  param[2].split("/");
-                                String lastEl = tmp[tmp.length-1];
-                                String dirName =  lastEl.substring(0, lastEl.length());
                                 param[3] = client.getCurrentPath()+"/"+dirName;
                             }else {
-                                String[] tmp =  param[2].split("/");
-                                String lastEl = tmp[tmp.length-1];
-                                String dirName =  lastEl.substring(0, lastEl.length());
                                 if(!was_relative)
                                     param[3] = param[3]+"/"+dirName;
                             }

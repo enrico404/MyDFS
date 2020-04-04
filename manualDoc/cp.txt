@@ -1,7 +1,7 @@
 Copia file locali nel filesystem distribuito e viceversa
 
 Uso:
-	cp <path_to_file> <file_system_path>
+	cp [-rm, -r] <path_to_file> <file_system_path>
 
 Opzioni:
 	-rm -> copia un file da filesystem distribuito a locale

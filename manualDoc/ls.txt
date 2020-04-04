@@ -1,10 +1,13 @@
 Resistituisce i file nella directory corrente
 
 Uso:
-	ls
+	ls [-a, -d]
 
 Opzioni:
-	-a -> per calcolare anche la dimensione delle directory
+	-a -> per vedere anche i meta dati dei file
+	-d -> per calcolare anche la dimensione delle directory
 
-Uso:
-	ls -a
+Esempi d'uso:
+    ls -a
+    ls -d
+    ls -a -d
