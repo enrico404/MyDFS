@@ -152,7 +152,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
             }
         }
         else {
-            System.err.println("Errore nella condivisione della directory");
+            utils.error_printer("Errore nella condivisione della directory");
         }
         return result;
     }
@@ -191,7 +191,8 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
                 }
             } else {
-                System.err.println("Errore nella condivisione della directory");
+                utils.error_printer("Errore nella condivisione della directory");
+
             }
         }else {
 
@@ -213,7 +214,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                 }
             }
             else {
-                System.err.println("Errore nella condivisione della directory");
+                utils.error_printer("Errore nella condivisione della directory");
             }
 
         }
@@ -264,7 +265,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
         }
         else {
-            System.err.println("Il file "+path+" non esiste!");
+            utils.error_printer("Il file "+path+" non esiste!");
         }
         return false;
     }
@@ -451,7 +452,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 //                System.out.println("Size: "+ f.getSize());
 //            }
             }else {
-                System.err.println("Non sei connesso ad una rete locale");
+                utils.error_printer("Non sei connesso ad una rete locale");
             }
         }catch(Exception e){
             e.printStackTrace();

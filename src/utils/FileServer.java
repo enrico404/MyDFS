@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.ScatteringByteChannel;
+import utils.utils;
 
 /**
  * Lato server del file transfer system, si fa uso del multithreading. In particolare si va ad istanziare un thread che
@@ -20,8 +21,17 @@ import java.nio.channels.ScatteringByteChannel;
 public class FileServer {
     private ServerSocket servSock = new ServerSocket();
     String path;
-    public FileServer() throws IOException {
+    boolean verbose;
+
+    /**
+     * Costruttore con parametri della classe, è possibile specificare se la classe deve essere verbosa o meno
+     * @param Verbose flag che indica alla classe se essere verbose
+     * @throws IOException
+     */
+    public FileServer(boolean Verbose) throws IOException {
         super();
+        verbose = Verbose;
+
     }
 
     /**
@@ -60,25 +70,28 @@ public class FileServer {
         while (true) {
             try {
                 Socket sock = servSock.accept();
-                System.out.println("Accepted connection.. " + sock);
+                if(verbose)
+                    System.out.println("Accepted connection.. " + sock);
                 //sSystem.out.println("path:"+ path);
                 in = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
                 out = new FileOutputStream(path);
                 int read;
                 byte[] temp = new byte[4096];
-                System.out.println("Tranfering a file.. ");
+                if(verbose)
+                    System.out.println("Tranfering a file.. ");
                 while ((read = in.read(temp)) > 0) {
                     out.write(temp, 0, read);
                 }
-                System.out.println("File transferred: "+ path);
+                if(verbose)
+                    System.out.println("File transferred: "+ path);
                 out.flush();
 
             }catch (FileNotFoundException e){
-                System.err.println(ConsoleColors.RED+"Path di destinazione errato!"+ConsoleColors.RESET);
+                utils.error_printer("Path di destinazione errato!");
 
             }
             catch (IOException e){
-                System.err.println(ConsoleColors.RED+"Errore nel socket del server"+ConsoleColors.RESET);
+                utils.error_printer("Errore nel socket del server");
             }finally {
                 if(in != null){
                     try {

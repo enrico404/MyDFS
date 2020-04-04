@@ -1,4 +1,4 @@
-copia un file locale nel filesystem distribuito
+Copia file locali nel filesystem distribuito e viceversa
 
 Uso:
 	cp <path_to_file> <file_system_path>

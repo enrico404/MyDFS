@@ -99,6 +99,16 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         return indexMax;
     }
 
+    @Override
+    public String getFileType(String path) throws RemoteException {
+        String loc = getFileLocation(path);
+        ServerInterface slave = getSlaveNode(loc);
+        if(slave.isDirectory(path)){
+            return "Dir";
+        }else
+            return "File";
+    }
+
     /**
      * Metodo il quale dato in input l'indice, restituisce il riferimento al nodo slave appartentende all'array slaveServers
      * @param index indice del nodo slave
