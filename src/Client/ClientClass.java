@@ -6,7 +6,7 @@ import utils.MyFileType;
 import utils.ConsoleColors;
 import utils.Helper;
 
-import java.awt.*;
+
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.SocketException;
@@ -255,13 +255,17 @@ public class ClientClass implements Serializable{
         else if(utils.contains(optionsArr, "-r")){
 
             File f = new File(path1);
-            if(f.exists()){
+            if(f.exists() && f.isDirectory()){
 
                 //System.out.println("Prova creazione directory su slave");
                 //slave.mkdir("/home/enrico404/shDir/dirCopy");
                 System.out.println("Inizio la copia ricorsiva di "+f.getName());
+
                 recursiveCopy(f, ser, path1, path2);
 
+            }
+            else{
+                utils.error_printer("La directory specificata non esiste!");
             }
         }
         else if (utils.contains(optionsArr, "-rm")){
@@ -446,6 +450,35 @@ public class ClientClass implements Serializable{
     }
 
     /**
+     * Metodo il cui dato un path di destinazione in ingresso genera il path finale.
+     * NB: il path in ingresso deve essere assoluto oppure '.'  . Si consiglia di pulirlo prima con la funzione
+     * utils.cleanString()
+     * @param destPath path di destinazione in ingresso
+     * @param ser riferimento al serverManager
+     * @return path di destinazione modificato
+     * @throws RemoteException
+     */
+    private String genDestPath(String sourcePath, String destPath, ServerManagerInterface ser) throws RemoteException {
+        String[] tmp = sourcePath.split("/");
+        String lastEl = tmp[tmp.length - 1];
+        String name = lastEl.substring(0, lastEl.length());
+        if (destPath.equals(".")) {
+            //se il secondo parametro è un . devo creare un file sul server con lo stesso nome
+            destPath = this.getCurrentPath() + "/" + name;
+        } else {
+            // tutti gli altri casi, c'è da gestire il caso in cui ho il nome della directory/file oppure non
+            //ce l'ho e devo creare una directory con lo stesso nome
+            String full_path = destPath + "/" + name;
+            if (ser.checkExists(destPath)) {
+                destPath = full_path;
+            }
+        }
+        return destPath;
+
+    }
+
+
+    /**
      * Metodo che gestisce l'help dei vari comandi. Fa uso della classe "Helper" per la gestione del manuale dei vari comandi
      * @param param contiene il nome del comando per cui si vuole chiamare l'help
      * @throws IOException
@@ -475,7 +508,6 @@ public class ClientClass implements Serializable{
             helper.print(param[1]);
         }
     }
-
 
 
 
@@ -579,29 +611,15 @@ public class ClientClass implements Serializable{
                     }
 
 
+
                     else if (ins.startsWith("cp")){
                         String[] param = ins.split(" ");
-                        boolean was_relative = true;
 
-                        if(param[2].startsWith("/")) {
-                            was_relative = false;
-                        }
                         //caso: client->slave
                         if(param.length == 3) {
                             param[1] = utils.cleanString(param[1], client);
                             param[2] = utils.cleanString(param[2], client);
-                            String[] tmp =  param[1].split("/");
-                            String lastEl = tmp[tmp.length-1];
-                            String fileName =  lastEl.substring(0, lastEl.length());
-                            if(param[2].equals(".")){
-                               //se il secondo parametro è un . devo creare un file sul server con lo stesso nome
-                                param[2] = client.getCurrentPath()+"/"+fileName;
-                           }
-                           else{
-                               // caso in cui il secondo parametro è il path assoluto alla cartella
-                                if(!was_relative)
-                                   param[2] = param[2]+"/"+fileName;
-                           }
+                            param[2] = client.genDestPath(param[1], param[2],ser);
                           // System.out.println("passo i parametri :"+param[1]+" "+ param[2]);
                             if (!(client.cp_func(ser, param[1], param[2]))) {
                                 utils.error_printer("Errore nella copia del file!");
@@ -614,20 +632,20 @@ public class ClientClass implements Serializable{
                             param[2] = utils.cleanString(param[2], client);
                             param[3] = utils.cleanString(param[3], client);
 
-                            String[] tmp =  param[2].split("/");
-                            String lastEl = tmp[tmp.length-1];
-                            String dirName =  lastEl.substring(0, lastEl.length());
-                            if(param[3].equals(".")){
-                                param[3] = client.getCurrentPath()+"/"+dirName;
-                            }else {
-                                if(!was_relative)
-                                    param[3] = param[3]+"/"+dirName;
-                            }
+//                            String[] tmp =  param[2].split("/");
+//                            String lastEl = tmp[tmp.length-1];
+//                            String dirName =  lastEl.substring(0, lastEl.length());
+//                            if(param[3].equals(".")){
+//                                param[3] = client.getCurrentPath()+"/"+dirName;
+//                            }else {
+//                                String full_path = param[3]+"/"+dirName;
+//                                if(ser.checkExists(param[3])){
+//                                    param[3] = full_path;
+//                                }
+//                            }
+                            param[3] = client.genDestPath(param[2], param[3], ser);
 
 
-
-                            System.out.println("Local path1:"+param[2]);
-                            System.out.println("Remote path2:"+param[3]);
 
                             if (utils.contains(param, "-rm", 1) || utils.contains(param, "-r", 1) ){
                                 ArrayList<String> options = new ArrayList<String>();
@@ -649,14 +667,12 @@ public class ClientClass implements Serializable{
                                 utils.error_printer("Devi specificare un path assoluto sul client!");
                                 continue;
                             }else {
-                                String[] tmp =  param[3].split("/");
-                                String lastEl = tmp[tmp.length-1];
-                                String dirName =  lastEl.substring(0, lastEl.length());
-                                param[4] = param[4]+"/"+dirName;
+//                                String[] tmp =  param[3].split("/");
+//                                String lastEl = tmp[tmp.length-1];
+//                                String dirName =  lastEl.substring(0, lastEl.length());
+//                                param[4] = param[4]+"/"+dirName;
+                                  param[4] = client.genDestPath(param[3], param[4], ser);
                             }
-                            System.out.println("remote path1:"+param[3]);
-                            System.out.println("client path2:"+param[4]);
-
 
                             if ((utils.contains(param, "-rm", 1) && utils.contains(param, "-r", 2)) || (utils.contains(param, "-rm", 2) && utils.contains(param, "-r", 1)) ){
                                 ArrayList<String> options = new ArrayList<String>();
