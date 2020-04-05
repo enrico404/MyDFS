@@ -82,8 +82,10 @@ public class FileServer {
                 while ((read = in.read(temp)) > 0) {
                     out.write(temp, 0, read);
                 }
-                if(verbose)
-                    System.out.println("File transferred: "+ path);
+                if(verbose) {
+                    System.out.println("File transferred: " + path);
+                    System.out.print(">");
+                }
                 out.flush();
 
             }catch (FileNotFoundException e){

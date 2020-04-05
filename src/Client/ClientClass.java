@@ -131,12 +131,13 @@ public class ClientClass implements Serializable{
             }
             return true;
         } else {
-            path = utils.cleanString(path, this);
-            System.out.println(path);
-            boolean exists = ser.checkExists(path);
-            if (exists) {
-                currentPath = path;
-                return true;
+            if(!path.equals("..")) {
+                path = utils.cleanString(path, this);
+                boolean exists = ser.checkExists(path);
+                if (exists) {
+                    currentPath = path;
+                    return true;
+                }
             }
             return false;
         }
@@ -192,8 +193,8 @@ public class ClientClass implements Serializable{
      * @throws InterruptedException
      */
     public boolean cp_func(ServerManagerInterface ser, String localPath, String remotePath) throws IOException, InterruptedException {
-        //System.out.println("loc: "+localPath);
-        //System.out.println("rem: "+remotePath);
+        System.out.println("loc: "+localPath);
+        System.out.println("rem: "+remotePath);
         //recupero indice dello slave più libero
         int slaveIndex = ser.freerNodeChooser();
         // recupero il reference al nodo slave

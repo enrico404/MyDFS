@@ -31,19 +31,42 @@ public class FileClient {
      * @param filePath percorso sorgente del file da inviare
      * @throws IOException
      */
-    public void send(String filePath) throws IOException {
+    public void send(String filePath) {
         File f = new File(filePath);
-        FileInputStream in = new FileInputStream(f);
-        DataOutputStream out = new DataOutputStream(sock.getOutputStream());
-        byte[] tmp = new byte[4096];
-        int read;
-        while((read = in.read(tmp)) > 0 ){
-            out.write(tmp, 0, read);
-        }
-        out.flush();
-        in.close();
-        out.close();
+        FileInputStream in = null;
+        DataOutputStream out = null;
+        try {
+            in = new FileInputStream(f);
 
+            out = new DataOutputStream(sock.getOutputStream());
+            byte[] tmp = new byte[4096];
+            int read;
+            while((read = in.read(tmp)) > 0 ){
+                out.write(tmp, 0, read);
+            }
+            out.flush();
+            in.close();
+            out.close();
+        } catch (FileNotFoundException e) {
+            utils.error_printer("File non trovato");
+        } catch (IOException e) {
+            utils.error_printer("Errore nella scrittura del file");
+        }finally {
+            if(in != null){
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (out != null){
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
 
     }
