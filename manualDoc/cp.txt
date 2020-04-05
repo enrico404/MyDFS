@@ -8,6 +8,6 @@ Opzioni:
 	-r -> per la copia ricorsiva di directory
 
 Uso:
-	cp -rm <remote_file_path> <local_path>
-	cp -r <path_to_dir> <file_system_path>
+	cp -rm <remote_file_path>... <local_path>
+	cp -r <path_to_dir>... <file_system_path>
 	cp -r -rm <remote_dir_path> <local_path>
