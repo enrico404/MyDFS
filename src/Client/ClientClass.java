@@ -193,8 +193,8 @@ public class ClientClass implements Serializable{
      * @throws InterruptedException
      */
     public boolean cp_func(ServerManagerInterface ser, String localPath, String remotePath) throws IOException, InterruptedException {
-        System.out.println("loc: "+localPath);
-        System.out.println("rem: "+remotePath);
+        //System.out.println("loc: "+localPath);
+        //System.out.println("rem: "+remotePath);
         //recupero indice dello slave più libero
         int slaveIndex = ser.freerNodeChooser();
         // recupero il reference al nodo slave
