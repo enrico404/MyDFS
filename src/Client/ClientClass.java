@@ -615,52 +615,45 @@ public class ClientClass implements Serializable{
 
                     else if (ins.startsWith("cp")){
                         String[] param = ins.split(" ");
+                        String originalDPath = param[param.length-1];
 
-                        //caso: client->slave
-                        if(param.length == 3) {
-                            param[1] = utils.cleanString(param[1], client);
-                            param[2] = utils.cleanString(param[2], client);
-                            param[2] = client.genDestPath(param[1], param[2],ser);
-                          // System.out.println("passo i parametri :"+param[1]+" "+ param[2]);
-                            if (!(client.cp_func(ser, param[1], param[2]))) {
-                                utils.error_printer("Errore nella copia del file!");
-                            }
-                            System.err.println("");
+                        //caso: client->slave, cp senza opzioni
+                        if(!(ins.startsWith("cp -"))) {
+                            System.out.println("qui");
+                            for(int i=1; i<param.length-1; i++) {
+                                param[i] = utils.cleanString(param[i], client);
 
-                        }
-                        // casi: slave->client oppure client(directory)->server
-                        else if(param.length == 4){
-                            param[2] = utils.cleanString(param[2], client);
-                            param[3] = utils.cleanString(param[3], client);
-
-//                            String[] tmp =  param[2].split("/");
-//                            String lastEl = tmp[tmp.length-1];
-//                            String dirName =  lastEl.substring(0, lastEl.length());
-//                            if(param[3].equals(".")){
-//                                param[3] = client.getCurrentPath()+"/"+dirName;
-//                            }else {
-//                                String full_path = param[3]+"/"+dirName;
-//                                if(ser.checkExists(param[3])){
-//                                    param[3] = full_path;
-//                                }
-//                            }
-                            param[3] = client.genDestPath(param[2], param[3], ser);
-
-
-
-                            if (utils.contains(param, "-rm", 1) || utils.contains(param, "-r", 1) ){
-                                ArrayList<String> options = new ArrayList<String>();
-                                options.add(param[1]);
-                                if (!(client.cp_func(ser, param[2], param[3], options, true))) {
+                                param[param.length-1] = utils.cleanString(param[param.length-1], client);
+                                param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
+                                // System.out.println("passo i parametri :"+param[1]+" "+ param[2]);
+                                if (!(client.cp_func(ser, param[i], param[param.length-1]))) {
                                     utils.error_printer("Errore nella copia del file!");
-
                                 }
                                 System.err.println("");
+                                param[param.length-1] = originalDPath;
+                            }
+                        }
+                        // casi: slave->client oppure client(directory)->server
+                        else if((ins.startsWith("cp -rm") || ins.startsWith("cp -r")) && !(ins.startsWith("cp -rm -r") || ins.startsWith("cp -r -rm"))){
+                            for(int i=2; i<param.length-1;i++) {
+                                param[i] = utils.cleanString(param[i], client);
+                                param[param.length-1] = utils.cleanString(param[param.length-1], client);
+
+
+                                param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
+
+                                ArrayList<String> options = new ArrayList<String>();
+                                options.add(param[1]);
+                                if (!(client.cp_func(ser, param[i], param[param.length-1], options, true))) {
+                                    utils.error_printer("Errore nella copia del file!");
+                                }
+                                System.err.println("");
+                                param[param.length-1] = originalDPath;
                             }
 
                         }
                         //casi:  slave(directory)->client
-                        else if (param.length == 5){
+                        else if ((ins.startsWith("cp -rm -r") || ins.startsWith("cp -r -rm")) ){
                             param[3] = utils.cleanString(param[3], client);
                             param[4] = utils.cleanString(param[4], client);
 
@@ -675,15 +668,15 @@ public class ClientClass implements Serializable{
                                   param[4] = client.genDestPath(param[3], param[4], ser);
                             }
 
-                            if ((utils.contains(param, "-rm", 1) && utils.contains(param, "-r", 2)) || (utils.contains(param, "-rm", 2) && utils.contains(param, "-r", 1)) ){
-                                ArrayList<String> options = new ArrayList<String>();
-                                options.add(param[1]);
-                                options.add(param[2]);
-                                if (!(client.cp_func(ser, param[3], param[4], options, true))) {
-                                    utils.error_printer("Errore nella copia del file!");
-                                }
-                                System.err.println("");
+
+                            ArrayList<String> options = new ArrayList<String>();
+                            options.add(param[1]);
+                            options.add(param[2]);
+                            if (!(client.cp_func(ser, param[3], param[4], options, true))) {
+                                utils.error_printer("Errore nella copia del file!");
                             }
+                            System.err.println("");
+
                         }
                         else {
                             utils.error_printer("Errore nella sintassi del comando! Digita 'help cp' per vedere la sintassi del comando");
