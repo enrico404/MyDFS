@@ -574,7 +574,7 @@ public class ClientClass implements Serializable{
                         String[] param = ins.split(" ");
 
                         if(param.length == 2){
-                            if(utils.contains(param, "-a")){
+                            if(utils.contains(param, "-l")){
                                 client.ls_func(ser, false, true, false);
                             }
                             else if(utils.contains(param, "-d")){
@@ -584,16 +584,16 @@ public class ClientClass implements Serializable{
 
                         }
                         else if(param.length == 3) {
-                           // if((param[1].equals("-a") && param[2].equals("-d") ) || (param[2].equals("-a") && param[1].equals("-d") ))
-                            if(utils.contains(param, "-a") && utils.contains(param,"-d"))
+                           // if((param[1].equals("-l") && param[2].equals("-d") ) || (param[2].equals("-l") && param[1].equals("-d") ))
+                            if(utils.contains(param, "-l") && utils.contains(param,"-d"))
                                 client.ls_func(ser, true, true, false);
-                            if(utils.contains(param, "-a") && utils.contains(param,"-h"))
+                            if(utils.contains(param, "-l") && utils.contains(param,"-h"))
                                 client.ls_func(ser, false, true, true);
                             //caso h - d inutile
                         }
                         else if(param.length == 4){
                             //se sbaglio ad inserire un opzione il comando non viene lanciato
-                            if(utils.contains(param, "-a") && utils.contains(param,"-d") && utils.contains(param, "-h"))
+                            if(utils.contains(param, "-l") && utils.contains(param,"-d") && utils.contains(param, "-h"))
                                 client.ls_func(ser, true, true, true);
                         }
                         else {

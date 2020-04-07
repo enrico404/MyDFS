@@ -34,7 +34,7 @@ public class Converter {
     /**
      * Simile al metodo precedente, ma ritorna una stringa con l'unità di misura al posto dei float,
      * per rendere la lettura migliore all'utente
-     * @param value alore in input da convertire
+     * @param value valore in input da convertire
      * @return valore convertito
      */
     public static String byte_to_humanS(long value){

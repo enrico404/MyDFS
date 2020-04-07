@@ -2,3 +2,9 @@ Mostra i nodi a cui il serverManager è attualmente connesso.
 
 Uso:
 	sview
+
+Opzioni:
+    -h -> output delle dimensioni human readable
+
+Esempio d'uso:
+    sview -h
