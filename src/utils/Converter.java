@@ -11,7 +11,7 @@ public class Converter {
      * @param value valore in input da convertire
      * @return valore convertito
      */
-    public static float byte_to_human(long value){
+    public static float byte_to_human(float value){
         float gb_divisor = 1024*1024*1024;
         float mega_divisor = 1024*1024;
         float kilo_divisor = 1024;
@@ -37,7 +37,7 @@ public class Converter {
      * @param value valore in input da convertire
      * @return valore convertito
      */
-    public static String byte_to_humanS(long value){
+    public static String byte_to_humanS(float value){
         float gb_divisor = 1024*1024*1024;
         float mega_divisor = 1024*1024;
         float kilo_divisor = 1024;

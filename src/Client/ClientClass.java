@@ -662,7 +662,6 @@ public class ClientClass implements Serializable{
 
                         //caso: client->slave, cp senza opzioni
                         if(!(ins.startsWith("cp -"))) {
-                            System.out.println("qui");
                             for(int i=1; i<param.length-1; i++) {
                                 param[i] = utils.cleanString(param[i], client);
 

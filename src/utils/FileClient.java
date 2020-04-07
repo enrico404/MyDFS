@@ -39,11 +39,26 @@ public class FileClient {
             in = new FileInputStream(f);
 
             out = new DataOutputStream(sock.getOutputStream());
-            byte[] tmp = new byte[4096];
-            int read;
-            while((read = in.read(tmp)) > 0 ){
-                out.write(tmp, 0, read);
+            byte[] buffer = new byte[4096];
+            int read = 0;
+            long total=0;
+            long before = System.currentTimeMillis();
+
+            while((read = in.read(buffer)) > 0 ){
+                out.write(buffer, 0, read);
+                long after = System.currentTimeMillis();
+                //speed in byte per second
+                //System.out.println(after+" "+before+ " "+read );
+                float elapsedTime = (after-before);
+                total += read;
+
+                if (elapsedTime > 0 && System.currentTimeMillis() % 100 == 0) {
+                    System.out.println("Read "+total+ " bytes, speed: "+ Converter.byte_to_humanS(total/(elapsedTime/1000))+"/S");
+                  
+                }
+
             }
+
             out.flush();
             in.close();
             out.close();
