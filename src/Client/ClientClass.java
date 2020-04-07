@@ -6,6 +6,7 @@ import utils.MyFileType;
 import utils.ConsoleColors;
 import utils.Helper;
 
+
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.SocketException;
@@ -17,7 +18,7 @@ import java.util.Scanner;
 import utils.utils;
 import utils.FileClient;
 import utils.FileServerThread;
-
+import utils.Converter;
 
 
 /**
@@ -54,7 +55,6 @@ public class ClientClass implements Serializable{
      * @return fc, riferimento al file client tansfer
      */
     public FileClient getFileClient(){return fc;}
-
     /**
      * Metodo che restituisce l'ip del client, in questo modo si agevola l'interazione con l'utente.
      * L'interfaccia presa in considerazione di default è la 0
@@ -74,16 +74,46 @@ public class ClientClass implements Serializable{
      * @param dirCapacity flag per indicare se si vuole anche calcolare la capacità delle directory o meno
      * @throws RemoteException
      */
-    public void ls_func(ServerManagerInterface ser, boolean dirCapacity) throws RemoteException {
+    public void ls_func(ServerManagerInterface ser, boolean dirCapacity, boolean verbose, boolean hread) throws RemoteException {
         ArrayList<MyFileType> res = ser.ls_func(currentPath, dirCapacity);
         System.out.println("");
-        for(MyFileType file: res ){
-            if(file.getType().equals("File"))
-                System.out.println(file.getName()+"     | Type: "+ file.getType() + "     | Size (bytes): "+ file.getSize()+ " | location: "+ file.getLocation());
-            else
-                System.out.println(ConsoleColors.GREEN +file.getName()+ ConsoleColors.RESET+"     | Type: "+ file.getType() + "     | Size (bytes): "+ file.getSize()+ " | location: - ");
+        if(!hread) {
+            for (MyFileType file : res) {
+                if (file.getType().equals("File")) {
+                    if (verbose)
+                        System.out.println(file.getName() + "     | Type: " + file.getType() + "     | Size (bytes): " + file.getSize() + " | location: " + file.getLocation());
+                    else
+                        System.out.print(file.getName() + "   ");
+                } else {
+                    if (verbose)
+                        System.out.println(ConsoleColors.GREEN + file.getName() + ConsoleColors.RESET + "     | Type: " + file.getType() + "     | Size (bytes): " + file.getSize() + " | location: - ");
+                    else
+                        System.out.print(ConsoleColors.GREEN + file.getName() + "   " + ConsoleColors.RESET);
+                }
+            }
+            System.out.println("");
+            System.out.println("");
+
+        }else{
+            //human readable size
+            String hsize = null;
+            for (MyFileType file : res) {
+                hsize = Converter.byte_to_humanS(file.getSize());
+                if (file.getType().equals("File")) {
+                    if (verbose)
+                        System.out.println(file.getName() + "     | Type: " + file.getType() + "     | Size: " + hsize  + " | location: " + file.getLocation());
+                    else
+                        System.out.print(file.getName() + "   ");
+                } else {
+                    if (verbose)
+                        System.out.println(ConsoleColors.GREEN + file.getName() + ConsoleColors.RESET + "     | Type: " + file.getType() + "     | Size: " + hsize+ " | location: - ");
+                    else
+                        System.out.print(ConsoleColors.GREEN + file.getName() + "   " + ConsoleColors.RESET);
+                }
+            }
         }
-        System.out.println();
+        System.out.println("");
+        System.out.println("");
     }
 
     /**
@@ -122,12 +152,13 @@ public class ClientClass implements Serializable{
             }
             return true;
         } else {
-            path = utils.cleanString(path, this);
-            System.out.println(path);
-            boolean exists = ser.checkExists(path);
-            if (exists) {
-                currentPath = path;
-                return true;
+            if(!path.equals("..")) {
+                path = utils.cleanString(path, this);
+                boolean exists = ser.checkExists(path);
+                if (exists) {
+                    currentPath = path;
+                    return true;
+                }
             }
             return false;
         }
@@ -144,7 +175,7 @@ public class ClientClass implements Serializable{
         for(String path: paths){
             //se fallisce la cancellazione
             if(!(ser.rm_func(currentPath+'/'+path))){
-                System.out.println("Fallita l'eliminazione di "+ path);
+                utils.error_printer("Fallita l'eliminazione di "+ path);
                 return false;
             }
             System.out.println("File "+path+" eliminato con successo!");
@@ -164,7 +195,7 @@ public class ClientClass implements Serializable{
         for(String path: paths){
             //se fallisce la cancellazione
             if(!(ser.rm_func_rec(currentPath+'/'+path))){
-                System.err.println("Fallita l'eliminazione di "+ path);
+                utils.error_printer("Fallita l'eliminazione di "+ path);
                 return false;
             }
             System.out.println(""+path+" eliminato con successo!");
@@ -214,7 +245,7 @@ public class ClientClass implements Serializable{
      * @throws IOException
      * @throws InterruptedException
      */
-    public boolean cp_func(ServerManagerInterface ser, String path1, String path2, ArrayList<String> options) throws IOException, InterruptedException {
+    public boolean cp_func(ServerManagerInterface ser, String path1, String path2, ArrayList<String> options, boolean verbose) throws IOException, InterruptedException {
         String[] optionsArr = new String[options.size()];
         optionsArr = options.toArray(optionsArr);
 
@@ -228,14 +259,17 @@ public class ClientClass implements Serializable{
                 System.out.println("Inizio copia ricorsiva ");
                 //il client in questo caso diventa il server ricevitore di file (FileServer) e il server diventa il FileClient
                 if (thread == null) {
-                    thread = new FileServerThread(port2, path2);
+                    if(verbose)
+                        thread = new FileServerThread(port2, path2, true);
+                    else
+                        thread = new FileServerThread(port2, path2, false);
                     thread.start();
                 }
                 thread.setPath(path2);
                 //recursiveCopy_remote(path1, path2, slave);
                 recursiveCopy_remote(path1, path2, ser);
             }else {
-                System.err.println(ConsoleColors.RED+"la directory \""+ utils.getFileName(path1)+ "\" non esiste!"+ConsoleColors.RESET);
+                utils.error_printer("la directory \""+ utils.getFileName(path1)+ "\" non esiste!");
             }
             //}
 
@@ -243,13 +277,17 @@ public class ClientClass implements Serializable{
         else if(utils.contains(optionsArr, "-r")){
 
             File f = new File(path1);
-            if(f.exists()){
+            if(f.exists() && f.isDirectory()){
 
                 //System.out.println("Prova creazione directory su slave");
                 //slave.mkdir("/home/enrico404/shDir/dirCopy");
                 System.out.println("Inizio la copia ricorsiva di "+f.getName());
+
                 recursiveCopy(f, ser, path1, path2);
 
+            }
+            else{
+                utils.error_printer("La directory specificata non esiste!");
             }
         }
         else if (utils.contains(optionsArr, "-rm")){
@@ -259,7 +297,10 @@ public class ClientClass implements Serializable{
                 ServerInterface slave = ser.getSlaveNode(location);
                 //il client in questo caso diventa il server ricevitore di file (FileServer) e il server diventa il FileClient
                 if (thread == null) {
-                    thread = new FileServerThread(port2, path2);
+                    if(verbose)
+                        thread = new FileServerThread(port2, path2, true);
+                    else
+                        thread = new FileServerThread(port2, path2, false);
                     thread.start();
                 }
                 thread.setPath(path2);
@@ -268,7 +309,7 @@ public class ClientClass implements Serializable{
 
 
             }else {
-                System.err.println(ConsoleColors.RED+"Il file \""+utils.getFileName(path1)+"\" non esiste"+ConsoleColors.RESET);
+                utils.error_printer("Il file \""+utils.getFileName(path1)+"\" non esiste");
                 return false;
             }
 
@@ -340,14 +381,22 @@ public class ClientClass implements Serializable{
     /**
      * Metodo per la stampa su standard output i nodi a cui il serverManager è attualmente connesso
      * @param ser Riferimento al serverManager
+     * @param param opzioni del comando
      * @throws RemoteException
      */
-    public void sview_func(ServerManagerInterface ser) throws RemoteException, SocketException {
+    public void sview_func(String[] param, ServerManagerInterface ser) throws RemoteException, SocketException {
         System.out.println("Sono connesso con i seguenti data nodes: ");
         System.out.println("");
         for(ServerInterface slave: ser.getSlaveServers()){
             System.out.println("Name: "+slave.getName()+ " |  ip: "+slave.getIp());
-            System.out.println(ConsoleColors.CYAN+"Spazio disponibile: "+slave.getFreeSpace()+ConsoleColors.RESET);
+            if(param.length == 1)
+                System.out.println(ConsoleColors.CYAN+"Spazio disponibile: "+slave.getFreeSpace()+ConsoleColors.RESET);
+            else if (param.length == 2){
+                if(utils.contains(param, "-h")) {
+                    String freeSpace_hS = Converter.byte_to_humanS(slave.getFreeSpace());
+                    System.out.println(ConsoleColors.CYAN + "Spazio disponibile: " + freeSpace_hS + ConsoleColors.RESET);
+                }
+            }
         }
         System.out.println("");
     }
@@ -372,12 +421,15 @@ public class ClientClass implements Serializable{
         }
         else if(param.length == 2) {
             if (param[1].equals("-h")) {
-                float gb_divisor = 1024*1024*1024;
-                float freeSpace_h = ser.getFreeSpace() / gb_divisor;
-                float clusterSpace_h = ser.getClusterCapacity() / gb_divisor;
+                float freeSpace_h = Converter.byte_to_human(ser.getFreeSpace());
+                float clusterSpace_h = Converter.byte_to_human(ser.getClusterCapacity());
+
+                String freeSpace_hS = Converter.byte_to_humanS(ser.getFreeSpace());
+                String clusterSpace_hS = Converter.byte_to_humanS(ser.getClusterCapacity());
+
                 System.out.println("");
-                System.out.println(ConsoleColors.CYAN+"Capacità disponibile del cluster: " + freeSpace_h + " GB");
-                System.out.println("Capacità massima del cluster: " + clusterSpace_h + " GB");
+                System.out.println(ConsoleColors.CYAN+"Capacità disponibile del cluster: " + freeSpace_hS);
+                System.out.println("Capacità massima del cluster: " + clusterSpace_hS);
                 System.out.println("");
                 float perc = (freeSpace_h*100)/clusterSpace_h;
                 System.out.println("Spazio disponibile in percentuale: "+ perc+"%"+ConsoleColors.RESET);
@@ -385,6 +437,79 @@ public class ClientClass implements Serializable{
             }
         }
     }
+
+
+    /**
+     * Metodo che si occupa di aprire un file all'interno del cluster. La logica è molto semplice, viene creata una
+     * copia temporanea del file nel filesystem locale al client. Successivamente il file viene aperto con il comando
+     * standard di UNIX per aprire i file (xdg-open)
+     * @param param path del file da aprire
+     * @param ser riferimento al serverManager
+     * @return true se il file viene aperto correttamente, false altrimenti
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public boolean open(String[] param, ServerManagerInterface ser) throws IOException, InterruptedException {
+        if (param.length == 2) {
+            String filePath = param[1];
+            //il file che sto cercando di aprire deve essere un file e non una directorys
+            //pulisco il path
+            filePath = utils.cleanString(filePath, this);
+
+            if(ser.getFileType(filePath).equals("File")) {
+
+                //settando la directory tmp non mi devo preoccupare di cancellare il file, se ne occuperà il sistema operativo
+                //quando lo ritiene più opportuno
+                String tmpFile = "/tmp/" + utils.getFileName(filePath);
+
+                //lo sto trattando come se fosse una copia remota da cluster a client
+                ArrayList<String> options = new ArrayList<String>();
+                options.add("-rm");
+                if (!(cp_func(ser, filePath, tmpFile, options, false))) {
+                    utils.error_printer("Errore nella copia del file!");
+                    System.err.println("");
+                    return false;
+                }
+
+                //una volta copiato il file lo posso aprire
+                Runtime.getRuntime().exec("xdg-open " + tmpFile);
+                return true;
+            }
+        }else{
+            return false;
+        }
+        utils.error_printer("Errore, stai cercando di aprire una directory!");
+        return false;
+    }
+
+    /**
+     * Metodo il cui dato un path di destinazione in ingresso genera il path finale.
+     * NB: il path in ingresso deve essere assoluto oppure '.'  . Si consiglia di pulirlo prima con la funzione
+     * utils.cleanString()
+     * @param destPath path di destinazione in ingresso
+     * @param ser riferimento al serverManager
+     * @return path di destinazione modificato
+     * @throws RemoteException
+     */
+    private String genDestPath(String sourcePath, String destPath, ServerManagerInterface ser) throws RemoteException {
+        String[] tmp = sourcePath.split("/");
+        String lastEl = tmp[tmp.length - 1];
+        String name = lastEl.substring(0, lastEl.length());
+        if (destPath.equals(".")) {
+            //se il secondo parametro è un . devo creare un file sul server con lo stesso nome
+            destPath = this.getCurrentPath() + "/" + name;
+        } else {
+            // tutti gli altri casi, c'è da gestire il caso in cui ho il nome della directory/file oppure non
+            //ce l'ho e devo creare una directory con lo stesso nome
+            String full_path = destPath + "/" + name;
+            if (ser.checkExists(destPath)) {
+                destPath = full_path;
+            }
+        }
+        return destPath;
+
+    }
+
 
     /**
      * Metodo che gestisce l'help dei vari comandi. Fa uso della classe "Helper" per la gestione del manuale dei vari comandi
@@ -399,20 +524,23 @@ public class ClientClass implements Serializable{
             System.out.println("");
             System.out.println("ls: restituisce i file nella directory corrente");
             System.out.println("cd: cambia la directory corrente");
-            System.out.println("rm: rimuove un file dal filesystem");
-            System.out.println("cp: copia un file locale nel filesystem distribuito");
+            System.out.println("rm: rimuove file dal filesystem distribuito");
+            System.out.println("cp: copia file locali nel filesystem distribuito e viceversa");
             System.out.println("mkdir: crea una directory nel file system distribuito");
             System.out.println("mv: muove file/directory all'interno del file system distribuito");
             System.out.println("du: mostra la disponibilità del cluster");
             System.out.println("sview: mostra i nodi a cui il serverManager è connesso");
+            System.out.println("open: apri un file del filesystem distribuito");
             System.out.println("exit: serve per smontare il cluster dal sistema");
+            System.out.println();
+            System.out.println();
+            System.out.println("Digita 'help <command_name>' per ottenere l'aiuto in linea del comando");
             System.out.println();
         }else {
             Helper helper = new Helper();
             helper.print(param[1]);
         }
     }
-
 
 
 
@@ -444,14 +572,35 @@ public class ClientClass implements Serializable{
 
                     if (ins.startsWith("ls")) {
                         String[] param = ins.split(" ");
+
                         if(param.length == 2){
-                            if(param[1].equals("-a")){
-                                client.ls_func(ser, true);
+                            if(utils.contains(param, "-l")){
+                                client.ls_func(ser, false, true, false);
                             }
+                            else if(utils.contains(param, "-d")){
+                                client.ls_func(ser, true, false, false);
+                            }
+                          //nel caso a un parametro il -h è inutile a causa del comporamento di default
+
+                        }
+                        else if(param.length == 3) {
+                           // if((param[1].equals("-l") && param[2].equals("-d") ) || (param[2].equals("-l") && param[1].equals("-d") ))
+                            if(utils.contains(param, "-l") && utils.contains(param,"-d"))
+                                client.ls_func(ser, true, true, false);
+                            if(utils.contains(param, "-l") && utils.contains(param,"-h"))
+                                client.ls_func(ser, false, true, true);
+                            //caso h - d inutile
+                        }
+                        else if(param.length == 4){
+                            //se sbaglio ad inserire un opzione il comando non viene lanciato
+                            if(utils.contains(param, "-l") && utils.contains(param,"-d") && utils.contains(param, "-h"))
+                                client.ls_func(ser, true, true, true);
                         }
                         else {
-                            client.ls_func(ser, false);
+                            //comportamento di default senza parametri
+                            client.ls_func(ser, false, false, false);
                         }
+
                     }
 
 
@@ -468,7 +617,7 @@ public class ClientClass implements Serializable{
 //                    }
                         String path = param[1];
                         if (!(client.cd_func(ser, path))) {
-                            System.err.println(ConsoleColors.RED+"La directory \"" + path + "\" non esiste!"+ConsoleColors.RESET);
+                            utils.error_printer("La directory \"" + path + "\" non esiste!");
                         }
                     }
 
@@ -483,8 +632,9 @@ public class ClientClass implements Serializable{
                             }
 
                             if (!(client.rm_func(ser, paths))) {
-                                System.err.println(ConsoleColors.RED+"Uno dei file \"" + paths + "\" non esiste oppure è una directory!"+ConsoleColors.RESET);
-                                System.err.println("(Per cancellare le directory usa l'opzione -rf )");
+                                utils.error_printer("Uno dei file \"" + paths + "\" non esiste oppure è una directory!" +
+                                        "\n (Per cancellare le directory usa l'opzione -rf )");
+
                             }
                         }else {
                             if (utils.contains(param, "-rf", 1)){
@@ -495,7 +645,7 @@ public class ClientClass implements Serializable{
                                 }
 
                                 if (!(client.rm_func_rec(ser, paths))) {
-                                    System.err.println(ConsoleColors.RED+"Errore nella cancellazione"+ConsoleColors.RESET);
+                                    utils.error_printer("Errore nella cancellazione");
 
                                 }
 
@@ -505,95 +655,74 @@ public class ClientClass implements Serializable{
                     }
 
 
+
                     else if (ins.startsWith("cp")){
                         String[] param = ins.split(" ");
+                        String originalDPath = param[param.length-1];
 
-                        //caso: client->slave
-                        if(param.length == 3) {
-                            param[1] = utils.cleanString(param[1], client);
-                            param[2] = utils.cleanString(param[2], client);
+                        //caso: client->slave, cp senza opzioni
+                        if(!(ins.startsWith("cp -"))) {
+                            System.out.println("qui");
+                            for(int i=1; i<param.length-1; i++) {
+                                param[i] = utils.cleanString(param[i], client);
 
-                           if(param[2].equals(".")){
-                               //se il secondo parametro è un . devo creare un file sul server con lo stesso nome
-                               String[] tmp =  param[1].split("/");
-                               String lastEl = tmp[tmp.length-1];
-                               String fileName =  lastEl.substring(0, lastEl.length());
-                               param[2] = client.getCurrentPath()+"/"+fileName;
-                           }else{
-                               // caso in cui il secondo parametro è il path assoluto alla cartella
-                               String[] tmp =  param[1].split("/");
-                               String lastEl = tmp[tmp.length-1];
-                               String fileName =  lastEl.substring(0, lastEl.length());
-                               param[2] = param[2]+"/"+fileName;
-                           }
-                            if (!(client.cp_func(ser, param[1], param[2]))) {
-                                System.err.println(ConsoleColors.RED+"Errore nella copia del file!"+ConsoleColors.RESET);
-                            }
-                            System.err.println("");
-
-                        }
-                        // casi: slave->client oppure client(directory)->server
-                        else if(param.length == 4){
-                            param[2] = utils.cleanString(param[2], client);
-                            param[3] = utils.cleanString(param[3], client);
-
-                            if(param[3].equals(".")){
-                                String[] tmp =  param[2].split("/");
-                                String lastEl = tmp[tmp.length-1];
-                                String dirName =  lastEl.substring(0, lastEl.length());
-                                param[3] = client.getCurrentPath()+"/"+dirName;
-                            }else {
-                                String[] tmp =  param[2].split("/");
-                                String lastEl = tmp[tmp.length-1];
-                                String dirName =  lastEl.substring(0, lastEl.length());
-                                param[3] = param[3]+"/"+dirName;
-                            }
-
-
-
-                            System.out.println("Local path1:"+param[2]);
-                            System.out.println("Remote path2:"+param[3]);
-
-                            if (utils.contains(param, "-rm", 1) || utils.contains(param, "-r", 1) ){
-                                ArrayList<String> options = new ArrayList<String>();
-                                options.add(param[1]);
-                                if (!(client.cp_func(ser, param[2], param[3], options))) {
-                                    System.err.println(ConsoleColors.RED+"Errore nella copia del file!"+ConsoleColors.RESET);
+                                param[param.length-1] = utils.cleanString(param[param.length-1], client);
+                                param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
+                                // System.out.println("passo i parametri :"+param[1]+" "+ param[2]);
+                                if (!(client.cp_func(ser, param[i], param[param.length-1]))) {
+                                    utils.error_printer("Errore nella copia del file!");
                                 }
                                 System.err.println("");
+                                param[param.length-1] = originalDPath;
+                            }
+                        }
+                        // casi: slave->client oppure client(directory)->server
+                        else if((ins.startsWith("cp -rm") || ins.startsWith("cp -r")) && !(ins.startsWith("cp -rm -r") || ins.startsWith("cp -r -rm"))){
+                            for(int i=2; i<param.length-1;i++) {
+                                param[i] = utils.cleanString(param[i], client);
+                                param[param.length-1] = utils.cleanString(param[param.length-1], client);
+
+
+                                param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
+
+                                ArrayList<String> options = new ArrayList<String>();
+                                options.add(param[1]);
+                                if (!(client.cp_func(ser, param[i], param[param.length-1], options, true))) {
+                                    utils.error_printer("Errore nella copia del file!");
+                                }
+                                System.err.println("");
+                                param[param.length-1] = originalDPath;
                             }
 
                         }
                         //casi:  slave(directory)->client
-                        else if (param.length == 5){
+                        else if ((ins.startsWith("cp -rm -r") || ins.startsWith("cp -r -rm")) ){
                             param[3] = utils.cleanString(param[3], client);
                             param[4] = utils.cleanString(param[4], client);
 
                             if(!(param[4].startsWith("/"))){
-                                System.err.println(ConsoleColors.RED+"Devi specificare un path assoluto sul client!"+ConsoleColors.RESET);
+                                utils.error_printer("Devi specificare un path assoluto sul client!");
                                 continue;
                             }else {
-                                String[] tmp =  param[3].split("/");
-                                String lastEl = tmp[tmp.length-1];
-                                String dirName =  lastEl.substring(0, lastEl.length());
-                                param[4] = param[4]+"/"+dirName;
+//                                String[] tmp =  param[3].split("/");
+//                                String lastEl = tmp[tmp.length-1];
+//                                String dirName =  lastEl.substring(0, lastEl.length());
+//                                param[4] = param[4]+"/"+dirName;
+                                  param[4] = client.genDestPath(param[3], param[4], ser);
                             }
-                            System.out.println("remote path1:"+param[3]);
-                            System.out.println("client path2:"+param[4]);
 
 
-                            if ((utils.contains(param, "-rm", 1) && utils.contains(param, "-r", 2)) || (utils.contains(param, "-rm", 2) && utils.contains(param, "-r", 1)) ){
-                                ArrayList<String> options = new ArrayList<String>();
-                                options.add(param[1]);
-                                options.add(param[2]);
-                                if (!(client.cp_func(ser, param[3], param[4], options))) {
-                                    System.err.println(ConsoleColors.RED+"Errore nella copia del file!"+ConsoleColors.RESET);
-                                }
-                                System.err.println("");
+                            ArrayList<String> options = new ArrayList<String>();
+                            options.add(param[1]);
+                            options.add(param[2]);
+                            if (!(client.cp_func(ser, param[3], param[4], options, true))) {
+                                utils.error_printer("Errore nella copia del file!");
                             }
+                            System.err.println("");
+
                         }
                         else {
-                            System.err.println(ConsoleColors.RED+"Errore nella sintassi del comando! Digita 'help cp' per vedere la sintassi del comando"+ConsoleColors.RESET);
+                            utils.error_printer("Errore nella sintassi del comando! Digita 'help cp' per vedere la sintassi del comando");
                         }
 
                     }
@@ -619,12 +748,12 @@ public class ClientClass implements Serializable{
                         String loc2 = ser.getFileLocation(param[2]);
                         boolean exists = true;
                         if (loc1 == null){
-                            System.err.println(ConsoleColors.RED+"Il file/directory "+param[1]+ " non esiste! "+ConsoleColors.RESET);
+                            utils.error_printer("Il file/directory "+param[1]+ " non esiste! ");
                             System.err.println("");
                             exists = false;
                         }
                         if (loc2 == null){
-                            System.err.println(ConsoleColors.RED+"la directory "+param[2]+ " non esiste! "+ConsoleColors.RESET);
+                            utils.error_printer("la directory "+param[2]+ " non esiste! ");
                             System.err.println("");
                             exists = false;
                         }
@@ -640,16 +769,26 @@ public class ClientClass implements Serializable{
                         client.du_func(param, ser);
                     }
 
-                    else if(ins.equals("sview")){
-                        client.sview_func(ser);
+                    else if(ins.startsWith("sview")){
+                        String[] param = ins.split(" ");
+                        client.sview_func(param, ser);
 
                     }
+
+                    else if(ins.startsWith("open")){
+                        String[] param = ins.split(" ");
+                        if(!(client.open(param, ser))){
+                            utils.error_printer("Errore nell'apertura del file \n");
+                        }
+
+                    }
+
 
                     else if (ins.equals("exit")) {
                         exit = true;
                     }
                     else {
-                        System.err.println(ConsoleColors.RED+"Il comando digitato non esiste!"+ConsoleColors.RESET);
+                        utils.error_printer("comando digitato non esiste!");
                     }
                 }
 

@@ -1,0 +1,4 @@
+Apre un file nel filesystem distribuito.
+
+Uso:
+    open <filename>

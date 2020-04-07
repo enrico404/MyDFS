@@ -1,10 +1,10 @@
-rimuove un file/directory specificato
+Rimuove un file/directory specificato
 
 Uso:
-	rm <file_name>
+	rm [-rf] <file_name>
 
 Opzioni: 
 	-rf -> per rimuovere le directory
 
-Uso:
+Esempi d'uso:
 	rm -rf <dir_name>

@@ -100,6 +100,14 @@ public class utils {
 
     }
 
+    /**
+     * Metodo per la stampa a console degli errori, la stampa è colorata di rosso
+     * @param error stringa contenente l'errore
+     */
+    public static void error_printer(String error){
+        System.err.println(ConsoleColors.RED+error+ConsoleColors.RESET);
+    }
+
 //    public static String relative_to_absolute(String path, String currentPath){
 //        // dato path relativo ./xxx/file.txt, restituisce path assoluto al file, tolto il nome del file es /home/user/xxxx
 //        path = path.substring(1, path.length());

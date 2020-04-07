@@ -1,7 +1,10 @@
 Verifica la disponibilità del cluster
 
 Uso:
-	du
+	du [-h]
 
 Opzioni:
 	-h : modalità human readable
+
+Esempi d'uso:
+    du -h

@@ -90,13 +90,16 @@ Digitare il comando "help" per ottenere la lista di comandi che il software mett
 
 - ls: restituisce i file nella directory corrente
 - cd: cambia la directory corrente
-- rm: rimuove un file dal filesystem
-- cp: copia un file locale nel filesystem distribuito
+- rm: rimuove file dal filesystem distribuito
+- cp: copia file locali nel filesystem distribuito e viceversa
 - mkdir: crea una directory nel file system distribuito
 - mv: muove file/directory all'interno del file system distribuito
 - du: mostra la disponibilità del cluster
 - sview: mostra i nodi a cui il serverManager è connesso
+- open: apri un file del filesystem distribuito
 - exit: serve per smontare il cluster dal sistema
+  
+
 
 
 Digitando "help <nome_comando> si ottiene il manuale relativo a quel comando"

@@ -38,7 +38,7 @@ Per compilare:
 	- apri un terminale in src
 	- esegui:
 
-	javac -d ../out/ Server/ServerInterface.java Server/ServerClass.java Client/ClientClass.java Server/ServerManagerInterface.java Server/ServerManager.java utils/utils.java utils/MyFileType.java utils/ConsoleColors.java
+	javac -d ../out/ Server/ServerInterface.java Server/ServerClass.java Client/ClientClass.java Server/ServerManagerInterface.java Server/ServerManager.java utils/utils.java utils/MyFileType.java utils/ConsoleColors.java utils/Converter.java
  
 
 ATTENZIONE:

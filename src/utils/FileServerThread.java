@@ -2,6 +2,7 @@ package utils;
 
 import Server.ServerInterface;
 
+import java.awt.image.ColorConvertOp;
 import java.io.IOException;
 
 /**
@@ -11,7 +12,8 @@ import java.io.IOException;
 public class FileServerThread extends Thread{
     int port;
     String path;
-    FileServer fs = new FileServer();
+    FileServer fs;
+    boolean verbose = true;
 
     /**
      * Costruttore con parametri della classe
@@ -23,6 +25,22 @@ public class FileServerThread extends Thread{
     public FileServerThread(int Port, String Path) throws IOException {
         port = Port;
         path = Path;
+        fs =  new FileServer(verbose);
+    }
+
+    /**
+     * Costruttore con parametri della classe
+     * @param Port numero di porta in cui mettere in ascolto il thread
+     * @param Path percorso di destinazione del file, verrà passato alla classe FIleServer che si occupa del vero e proprio
+     *             trasferimento
+     * @param Verbose flag che indica alla classe se essere verbose o meno
+     * @throws IOException
+     */
+    public FileServerThread(int Port, String Path, boolean Verbose) throws IOException {
+        port = Port;
+        path = Path;
+        verbose = Verbose;
+        fs = new FileServer(verbose);
 
     }
 

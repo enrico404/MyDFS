@@ -34,4 +34,5 @@ public interface ServerManagerInterface extends Remote {
     boolean mkdir(String[] path, String currentPath) throws RemoteException;
     long getFreeSpace() throws RemoteException;
     long getClusterCapacity() throws RemoteException;
+    String getFileType(String path) throws RemoteException;
 }
