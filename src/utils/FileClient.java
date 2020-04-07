@@ -1,5 +1,6 @@
 package utils;
 
+import javax.sound.midi.SysexMessage;
 import java.io.*;
 import java.net.Socket;
 
@@ -31,7 +32,7 @@ public class FileClient {
      * @param filePath percorso sorgente del file da inviare
      * @throws IOException
      */
-    public void send(String filePath) {
+    public void send(String filePath, boolean verbose) {
         File f = new File(filePath);
         FileInputStream in = null;
         DataOutputStream out = null;
@@ -47,18 +48,15 @@ public class FileClient {
             while((read = in.read(buffer)) > 0 ){
                 out.write(buffer, 0, read);
                 long after = System.currentTimeMillis();
-                //speed in byte per second
-                //System.out.println(after+" "+before+ " "+read );
                 float elapsedTime = (after-before);
                 total += read;
-
-                if (elapsedTime > 0 && System.currentTimeMillis() % 100 == 0) {
-                    System.out.println("Read "+total+ " bytes, speed: "+ Converter.byte_to_humanS(total/(elapsedTime/1000))+"/S");
-                  
-                }
+                if(verbose)
+                    if (elapsedTime > 0 && System.currentTimeMillis() % 60 == 0) {
+                        System.out.print("\rTransfer speed: "+ Converter.byte_to_humanS(total/(elapsedTime/1000))+"/S");
+                    }
 
             }
-
+            System.out.println("");
             out.flush();
             in.close();
             out.close();

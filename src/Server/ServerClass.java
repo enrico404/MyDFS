@@ -402,7 +402,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         File f = new File(path);
         if(!(f.isDirectory())) {
             fc = new FileClient(port, ip);
-            fc.send(path);
+            fc.send(path,false);
             return true;
         }
         return false;

@@ -127,7 +127,7 @@ public class ClientClass implements Serializable{
     public boolean mkdir(String path) throws RemoteException{
         File f = new File(path);
         if(f.mkdir()) {
-            System.out.println("Directory creata "+ f.getName());
+            //System.out.println("Directory creata "+ f.getName());
             return true;}
         return  false;
     }
@@ -224,7 +224,7 @@ public class ClientClass implements Serializable{
         slave.startFileServer(port, remotePath);
         fc = new FileClient(port, slave.getIp());
         localPath = utils.cleanString(localPath, this);
-        fc.send(localPath);
+        fc.send(localPath, true);
         return true;
     }
 

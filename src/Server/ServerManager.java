@@ -376,7 +376,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     public boolean cp_func_slave(ServerInterface slave, String path1, String path2) throws IOException, InterruptedException {
         slave.startFileServer(port, path2);
         FileClient fc = new FileClient(port, slave.getIp());
-        fc.send(path1);
+        fc.send(path1, false);
         return true;
     }
 

@@ -70,26 +70,37 @@ public class FileServer {
         while (true) {
             try {
                 Socket sock = servSock.accept();
-                if(verbose)
-                    System.out.println("Accepted connection.. " + sock);
+                //if(verbose)
+                   // System.out.print("\rAccepted connection.. " + sock);
                 //sSystem.out.println("path:"+ path);
                 in = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
                 out = new FileOutputStream(path);
                 int read;
-                byte[] temp = new byte[4096];
-                if(verbose)
-                    System.out.println("Tranfering a file.. ");
-                while ((read = in.read(temp)) > 0) {
-                    out.write(temp, 0, read);
+                byte[] buffer = new byte[4096];
+                //if(verbose)
+                   // System.out.print("\rTranfering a file.. ");
+                long before = System.currentTimeMillis();
+                long total=0;
+                while ((read = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, read);
+                    long after = System.currentTimeMillis();
+                    float elapsedTime = (after-before);
+                    total += read;
+                    if(verbose)
+                        if (elapsedTime > 0 && System.currentTimeMillis() % 60 == 0) {
+                            System.out.print("\rTransfer speed: "+ Converter.byte_to_humanS(total/(elapsedTime/1000))+"/S");
+                        }
                 }
                 if(verbose) {
-                    System.out.println("File transferred: " + path);
-                    System.out.print(">");
+                   // System.out.print("\rFile transferred: " + path);
+                    //System.out.print("\r>\n");
                 }
                 out.flush();
 
             }catch (FileNotFoundException e){
-                utils.error_printer("Path di destinazione errato!");
+//                File f = new File(path);
+//                if(!f.isDirectory())
+//                    utils.error_printer("\nPath di destinazione errato!"+ path);
 
             }
             catch (IOException e){
