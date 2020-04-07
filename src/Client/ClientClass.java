@@ -18,7 +18,7 @@ import java.util.Scanner;
 import utils.utils;
 import utils.FileClient;
 import utils.FileServerThread;
-
+import utils.Converter;
 
 
 /**
@@ -74,21 +74,42 @@ public class ClientClass implements Serializable{
      * @param dirCapacity flag per indicare se si vuole anche calcolare la capacità delle directory o meno
      * @throws RemoteException
      */
-    public void ls_func(ServerManagerInterface ser, boolean dirCapacity, boolean verbose) throws RemoteException {
+    public void ls_func(ServerManagerInterface ser, boolean dirCapacity, boolean verbose, boolean hread) throws RemoteException {
         ArrayList<MyFileType> res = ser.ls_func(currentPath, dirCapacity);
         System.out.println("");
-        for(MyFileType file: res ){
-            if(file.getType().equals("File")) {
-                if(verbose)
-                    System.out.println(file.getName() + "     | Type: " + file.getType() + "     | Size (bytes): " + file.getSize() + " | location: " + file.getLocation());
-                else
-                    System.out.print(file.getName()+"   ");
+        if(!hread) {
+            for (MyFileType file : res) {
+                if (file.getType().equals("File")) {
+                    if (verbose)
+                        System.out.println(file.getName() + "     | Type: " + file.getType() + "     | Size (bytes): " + file.getSize() + " | location: " + file.getLocation());
+                    else
+                        System.out.print(file.getName() + "   ");
+                } else {
+                    if (verbose)
+                        System.out.println(ConsoleColors.GREEN + file.getName() + ConsoleColors.RESET + "     | Type: " + file.getType() + "     | Size (bytes): " + file.getSize() + " | location: - ");
+                    else
+                        System.out.print(ConsoleColors.GREEN + file.getName() + "   " + ConsoleColors.RESET);
+                }
             }
-            else {
-                if(verbose)
-                    System.out.println(ConsoleColors.GREEN + file.getName() + ConsoleColors.RESET + "     | Type: " + file.getType() + "     | Size (bytes): " + file.getSize() + " | location: - ");
-                else
-                    System.out.print(ConsoleColors.GREEN + file.getName()+"   " + ConsoleColors.RESET);
+            System.out.println("");
+            System.out.println("");
+
+        }else{
+            //human readable size
+            String hsize = null;
+            for (MyFileType file : res) {
+                hsize = Converter.byte_to_humanS(file.getSize());
+                if (file.getType().equals("File")) {
+                    if (verbose)
+                        System.out.println(file.getName() + "     | Type: " + file.getType() + "     | Size: " + hsize  + " | location: " + file.getLocation());
+                    else
+                        System.out.print(file.getName() + "   ");
+                } else {
+                    if (verbose)
+                        System.out.println(ConsoleColors.GREEN + file.getName() + ConsoleColors.RESET + "     | Type: " + file.getType() + "     | Size: " + hsize+ " | location: - ");
+                    else
+                        System.out.print(ConsoleColors.GREEN + file.getName() + "   " + ConsoleColors.RESET);
+                }
             }
         }
         System.out.println("");
@@ -360,14 +381,22 @@ public class ClientClass implements Serializable{
     /**
      * Metodo per la stampa su standard output i nodi a cui il serverManager è attualmente connesso
      * @param ser Riferimento al serverManager
+     * @param param opzioni del comando
      * @throws RemoteException
      */
-    public void sview_func(ServerManagerInterface ser) throws RemoteException, SocketException {
+    public void sview_func(String[] param, ServerManagerInterface ser) throws RemoteException, SocketException {
         System.out.println("Sono connesso con i seguenti data nodes: ");
         System.out.println("");
         for(ServerInterface slave: ser.getSlaveServers()){
             System.out.println("Name: "+slave.getName()+ " |  ip: "+slave.getIp());
-            System.out.println(ConsoleColors.CYAN+"Spazio disponibile: "+slave.getFreeSpace()+ConsoleColors.RESET);
+            if(param.length == 1)
+                System.out.println(ConsoleColors.CYAN+"Spazio disponibile: "+slave.getFreeSpace()+ConsoleColors.RESET);
+            else if (param.length == 2){
+                if(utils.contains(param, "-h")) {
+                    String freeSpace_hS = Converter.byte_to_humanS(slave.getFreeSpace());
+                    System.out.println(ConsoleColors.CYAN + "Spazio disponibile: " + freeSpace_hS + ConsoleColors.RESET);
+                }
+            }
         }
         System.out.println("");
     }
@@ -392,12 +421,15 @@ public class ClientClass implements Serializable{
         }
         else if(param.length == 2) {
             if (param[1].equals("-h")) {
-                float gb_divisor = 1024*1024*1024;
-                float freeSpace_h = ser.getFreeSpace() / gb_divisor;
-                float clusterSpace_h = ser.getClusterCapacity() / gb_divisor;
+                float freeSpace_h = Converter.byte_to_human(ser.getFreeSpace());
+                float clusterSpace_h = Converter.byte_to_human(ser.getClusterCapacity());
+
+                String freeSpace_hS = Converter.byte_to_humanS(ser.getFreeSpace());
+                String clusterSpace_hS = Converter.byte_to_humanS(ser.getClusterCapacity());
+
                 System.out.println("");
-                System.out.println(ConsoleColors.CYAN+"Capacità disponibile del cluster: " + freeSpace_h + " GB");
-                System.out.println("Capacità massima del cluster: " + clusterSpace_h + " GB");
+                System.out.println(ConsoleColors.CYAN+"Capacità disponibile del cluster: " + freeSpace_hS);
+                System.out.println("Capacità massima del cluster: " + clusterSpace_hS);
                 System.out.println("");
                 float perc = (freeSpace_h*100)/clusterSpace_h;
                 System.out.println("Spazio disponibile in percentuale: "+ perc+"%"+ConsoleColors.RESET);
@@ -540,22 +572,33 @@ public class ClientClass implements Serializable{
 
                     if (ins.startsWith("ls")) {
                         String[] param = ins.split(" ");
+
                         if(param.length == 2){
-                            if(param[1].equals("-a")){
-                                client.ls_func(ser, false, true);
+                            if(utils.contains(param, "-a")){
+                                client.ls_func(ser, false, true, false);
                             }
-                            else if(param[1].equals("-d")){
-                                client.ls_func(ser, true, false);
+                            else if(utils.contains(param, "-d")){
+                                client.ls_func(ser, true, false, false);
                             }
+                          //nel caso a un parametro il -h è inutile a causa del comporamento di default
 
                         }
                         else if(param.length == 3) {
-                            if((param[1].equals("-a") && param[2].equals("-d") )|| (param[2].equals("-a") && param[1].equals("-d") ))
-                                client.ls_func(ser, true, true);
+                           // if((param[1].equals("-a") && param[2].equals("-d") ) || (param[2].equals("-a") && param[1].equals("-d") ))
+                            if(utils.contains(param, "-a") && utils.contains(param,"-d"))
+                                client.ls_func(ser, true, true, false);
+                            if(utils.contains(param, "-a") && utils.contains(param,"-h"))
+                                client.ls_func(ser, false, true, true);
+                            //caso h - d inutile
+                        }
+                        else if(param.length == 4){
+                            //se sbaglio ad inserire un opzione il comando non viene lanciato
+                            if(utils.contains(param, "-a") && utils.contains(param,"-d") && utils.contains(param, "-h"))
+                                client.ls_func(ser, true, true, true);
                         }
                         else {
                             //comportamento di default senza parametri
-                            client.ls_func(ser, false, false);
+                            client.ls_func(ser, false, false, false);
                         }
 
                     }
@@ -726,8 +769,9 @@ public class ClientClass implements Serializable{
                         client.du_func(param, ser);
                     }
 
-                    else if(ins.equals("sview")){
-                        client.sview_func(ser);
+                    else if(ins.startsWith("sview")){
+                        String[] param = ins.split(" ");
+                        client.sview_func(param, ser);
 
                     }
 
