@@ -215,7 +215,7 @@ public class ClientClass implements Serializable{
      * @throws IOException
      * @throws InterruptedException
      */
-    public boolean cp_func(ServerManagerInterface ser, String localPath, String remotePath, boolean internal) throws IOException, InterruptedException {
+    public boolean cp_func(ServerManagerInterface ser, String localPath, String remotePath) throws IOException {
         //System.out.println("loc: "+localPath);
         //System.out.println("rem: "+remotePath);
         //recupero indice dello slave più libero
@@ -224,18 +224,12 @@ public class ClientClass implements Serializable{
         ServerInterface slave = ser.getSlaveNode(slaveIndex);
         //System.out.println("nodo scelto: "+ slave.getName());
         slave.startFileServer(port, remotePath);
-        if (internal) {
-            //se è un trasferimento di file interno al file system remoto
-            String loc = ser.getFileLocation(localPath);
-            ServerInterface ClSlave = ser.getSlaveNode(loc);
-            ClSlave.startFileClient(port, slave.getIp(), localPath);
-            return true;
-        }else {
-            fc = new FileClient(port, slave.getIp());
-            localPath = utils.cleanString(localPath, this);
-            fc.send(localPath, true);
-            return true;
-        }
+
+        fc = new FileClient(port, slave.getIp());
+        localPath = utils.cleanString(localPath, this);
+        fc.send(localPath, true);
+        return true;
+
     }
 
 
@@ -255,7 +249,7 @@ public class ClientClass implements Serializable{
      * @throws IOException
      * @throws InterruptedException
      */
-    public boolean cp_func(ServerManagerInterface ser, String path1, String path2, ArrayList<String> options, boolean verbose, boolean internal) throws IOException, InterruptedException {
+    public boolean cp_func(ServerManagerInterface ser, String path1, String path2, ArrayList<String> options, boolean verbose) throws IOException, InterruptedException {
         String[] optionsArr = new String[options.size()];
         optionsArr = options.toArray(optionsArr);
 
@@ -285,7 +279,7 @@ public class ClientClass implements Serializable{
 
         }
         else if(utils.contains(optionsArr, "-r")){
-            if(!internal) {
+
                 File f = new File(path1);
                 if (f.exists() && f.isDirectory()) {
 
@@ -293,25 +287,12 @@ public class ClientClass implements Serializable{
                     //slave.mkdir("/home/enrico404/shDir/dirCopy");
                     System.out.println("Inizio la copia ricorsiva di " + f.getName());
 
-                    recursiveCopy(f, ser, path1, path2, internal);
-
-                } else {
-                    utils.error_printer("La directory specificata non esiste!");
-                }
-            }else{
-                //file interno al file system remoto
-
-                if(ser.checkExists(path1)){
-
-                    System.out.println("Inizio la copia ricorsiva di " + path1);
-
-                    recursiveCopyInt(path1, path2, ser);
+                    recursiveCopy(f, ser, path1, path2);
 
                 } else {
                     utils.error_printer("La directory specificata non esiste!");
                 }
 
-            }
         }
         else if (utils.contains(optionsArr, "-rm")){
             // path1 è il path del file remoto e path2 è il path del file in locale
@@ -349,7 +330,7 @@ public class ClientClass implements Serializable{
      * @throws IOException
      * @throws InterruptedException
      */
-    public void recursiveCopy(File f ,ServerManagerInterface ser, String localPath, String remotePath, boolean internal) throws IOException, InterruptedException {
+    public void recursiveCopy(File f ,ServerManagerInterface ser, String localPath, String remotePath) throws IOException, InterruptedException {
         if (f.isDirectory()){
 //            int slaveIndex = ser.freerNodeChooser();
 //            ServerInterface slave = ser.getSlaveNode(slaveIndex);
@@ -359,46 +340,15 @@ public class ClientClass implements Serializable{
             for(File sub: f.listFiles()){
                 String localPathNew = localPath+'/'+sub.getName();
                 String remotePathNew = remotePath+'/'+sub.getName();
-                recursiveCopy(sub, ser, localPathNew, remotePathNew, internal);
+                recursiveCopy(sub, ser, localPathNew, remotePathNew);
             }
         }else {
 
-            cp_func(ser, localPath, remotePath, internal);
+            cp_func(ser, localPath, remotePath);
         }
 
     }
 
-    /**
-     *
-     *
-     * @param clientPath
-     * @param serverPath
-     * @param ser
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    public void recursiveCopyInt(String clientPath, String serverPath, ServerManagerInterface ser) throws IOException, InterruptedException {
-        for(ServerInterface slave: ser.getSlaveServers()) {
-
-            if(slave.isDirectory(clientPath) && slave.checkExists(clientPath)){
-                String[] param = new String[1];
-                param[0]=serverPath;
-               // System.out.println("Creo directory : "+serverPath);
-                //ser.mkdir(param, this.getCurrentPath());
-                slave.mkdir(serverPath);
-                for (File sub : slave.listFiles(clientPath)) {
-                    String newClientPath = clientPath+ '/' + sub.getName();
-                    String newSerPath = serverPath+ '/' + sub.getName();
-                    recursiveCopyInt(newClientPath, newSerPath, ser);
-                }
-            }else{
-               // System.out.println("copio: "+clientPath+" in :"+ serverPath);
-                cp_func(ser,clientPath,serverPath,true);
-            }
-
-
-        }
-    }
 
     /**
      * Metodo per la copia ricorsiva di directory da remoto a locale, viene utilizzato dalla funzione "cp_func"
@@ -520,7 +470,7 @@ public class ClientClass implements Serializable{
                 //lo sto trattando come se fosse una copia remota da cluster a client
                 ArrayList<String> options = new ArrayList<String>();
                 options.add("-rm");
-                if (!(cp_func(ser, filePath, tmpFile, options, false,false))) {
+                if (!(cp_func(ser, filePath, tmpFile, options, false))) {
                     utils.error_printer("Errore nella copia del file!");
                     System.err.println("");
                     return false;
@@ -724,7 +674,7 @@ public class ClientClass implements Serializable{
                                 param[param.length-1] = utils.cleanString(param[param.length-1], client);
                                 param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
                                 // System.out.println("passo i parametri :"+param[1]+" "+ param[2]);
-                                if (!(client.cp_func(ser, param[i], param[param.length-1], false))) {
+                                if (!(client.cp_func(ser, param[i], param[param.length-1]))) {
                                     utils.error_printer("Errore nella copia del file!");
                                 }
                                 System.err.println("");
@@ -742,7 +692,7 @@ public class ClientClass implements Serializable{
 
                                 ArrayList<String> options = new ArrayList<String>();
                                 options.add(param[1]);
-                                if (!(client.cp_func(ser, param[i], param[param.length-1], options, true, false))) {
+                                if (!(client.cp_func(ser, param[i], param[param.length-1], options, true))) {
                                     utils.error_printer("Errore nella copia del file!");
                                 }
                                 System.err.println("");
@@ -770,7 +720,7 @@ public class ClientClass implements Serializable{
                             ArrayList<String> options = new ArrayList<String>();
                             options.add(param[1]);
                             options.add(param[2]);
-                            if (!(client.cp_func(ser, param[3], param[4], options, true, false))) {
+                            if (!(client.cp_func(ser, param[3], param[4], options, true))) {
                                 utils.error_printer("Errore nella copia del file!");
                             }
                             System.err.println("");
@@ -784,7 +734,8 @@ public class ClientClass implements Serializable{
                                 param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
 
 
-                                if (!(client.cp_func(ser, param[i], param[param.length-1], true))) {
+                               // if (!(client.cp_func(ser, param[i], param[param.length-1], true))) {
+                                if (!(ser.cp_func(param[i], param[param.length-1]))) {
                                     utils.error_printer("Errore nella copia del file!");
                                 }
                                 System.err.println("");
@@ -799,17 +750,15 @@ public class ClientClass implements Serializable{
                             for(int i=3; i<param.length-1;i++) {
                                 param[i] = utils.cleanString(param[i], client);
                                 param[param.length-1] = utils.cleanString(param[param.length-1], client);
-
-
                                 param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
-
                                 ArrayList<String> options = new ArrayList<String>();
                                 options.add(param[1]);
                                 options.add(param[2]);
-                                if (!(client.cp_func(ser, param[i], param[param.length-1], options, false, true))) {
-                                    utils.error_printer("Errore nella copia del file!");
-                                }
-                                System.err.println("");
+
+                                System.out.println("Inizio la copia ricorsiva di " + param[i]);
+                                ser.recursiveCopyInt(param[i], param[param.length-1]);
+
+
                                 param[param.length-1] = originalDPath;
                             }
 

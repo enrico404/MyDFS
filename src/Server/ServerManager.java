@@ -332,17 +332,59 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     }
 
     /**
-     * Metodo cp relativo al ServerManager, deprecato
-     * @deprecated
-     * @return
+     * Metodo cp relativo al ServerManager, per la copia di file tra i vari data nodes
+     * @param localPath path file sorgente
+     * @param remotePath path file destinazione
+     * @return true in caso di successo
      * @throws RemoteException
      */
     @Override
-    @Deprecated
-    public boolean cp_func() throws RemoteException {
-        int i = freerNodeChooser();
-        return false;
+    public boolean cp_func(String localPath, String remotePath) throws IOException {
+        //recupero indice dello slave più libero
+        int slaveIndex = freerNodeChooser();
+        // recupero il reference al nodo slave
+        ServerInterface slave = getSlaveNode(slaveIndex);
+        //System.out.println("nodo scelto: "+ slave.getName());
+        slave.startFileServer(port, remotePath);
+        //se è un trasferimento di file interno al file system remoto
+        String loc = getFileLocation(localPath);
+        ServerInterface ClSlave = getSlaveNode(loc);
+        ClSlave.startFileClient(port, slave.getIp(), localPath);
+        return true;
     }
+
+    /**
+     *  Metodo per la copia ricorsiva di directory tra i dataNodes
+     *
+     * @param clientPath path dir sorgente
+     * @param serverPath path di destinazione
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @Override
+    public void recursiveCopyInt(String clientPath, String serverPath) throws IOException {
+        for(ServerInterface slave: getSlaveServers()) {
+
+            if(slave.isDirectory(clientPath) && slave.checkExists(clientPath)){
+                String[] param = new String[1];
+                param[0]=serverPath;
+                // System.out.println("Creo directory : "+serverPath);
+                //ser.mkdir(param, this.getCurrentPath());
+                slave.mkdir(serverPath);
+                for (File sub : slave.listFiles(clientPath)) {
+                    String newClientPath = clientPath+ '/' + sub.getName();
+                    String newSerPath = serverPath+ '/' + sub.getName();
+                    recursiveCopyInt(newClientPath, newSerPath);
+                }
+            }else{
+                // System.out.println("copio: "+clientPath+" in :"+ serverPath);
+                cp_func(clientPath,serverPath);
+            }
+
+
+        }
+    }
+
 
     /**
      * Metodo che restitusìisce la locazione (nome del nodo slave) di un file/directory dato il percorso
