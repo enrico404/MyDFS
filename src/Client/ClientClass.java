@@ -57,6 +57,7 @@ public class ClientClass implements Serializable{
      * @return fc, riferimento al file client tansfer
      */
     public FileClient getFileClient(){return fc;}
+
     /**
      * Metodo che restituisce l'ip del client, in questo modo si agevola l'interazione con l'utente.
      * L'interfaccia presa in considerazione di default è la 0
@@ -560,7 +561,7 @@ public class ClientClass implements Serializable{
     public static void main(String args[]) throws IOException {
         if (args.length == 1) {
             String serverAdd = args[0];
-
+            ParamParser parser = new ParamParser();
             try {
                 ServerManagerInterface ser = (ServerManagerInterface) Naming.lookup(serverAdd);
                 System.out.println(ConsoleColors.GREEN+"Connesso al cluster correttamente!"+ConsoleColors.RESET);
@@ -577,30 +578,24 @@ public class ClientClass implements Serializable{
 
                     if (ins.startsWith("ls")) {
                         String[] param = ins.split(" ");
-
-                        if(param.length == 2){
-                            if(utils.contains(param, "-l")){
+                        if(parser.checkParam(ins, "-l")){
                                 client.ls_func(ser, false, true, false);
-                            }
-                            else if(utils.contains(param, "-d")){
+                        }
+                        else if(parser.checkParam(ins, "-d")){
                                 client.ls_func(ser, true, false, false);
-                            }
+                        }
                           //nel caso a un parametro il -h è inutile a causa del comporamento di default
 
-                        }
-                        else if(param.length == 3) {
-                           // if((param[1].equals("-l") && param[2].equals("-d") ) || (param[2].equals("-l") && param[1].equals("-d") ))
-                            if(utils.contains(param, "-l") && utils.contains(param,"-d"))
-                                client.ls_func(ser, true, true, false);
-                            if(utils.contains(param, "-l") && utils.contains(param,"-h"))
-                                client.ls_func(ser, false, true, true);
-                            //caso h - d inutile
-                        }
-                        else if(param.length == 4){
-                            //se sbaglio ad inserire un opzione il comando non viene lanciato
-                            if(utils.contains(param, "-l") && utils.contains(param,"-d") && utils.contains(param, "-h"))
-                                client.ls_func(ser, true, true, true);
-                        }
+                        else if(parser.checkParam(ins, "-ld"))
+                            client.ls_func(ser, true, true, false);
+
+                        else if(parser.checkParam(ins, "-lh"))
+                            client.ls_func(ser, false, true, true);
+
+                        //se sbaglio ad inserire un opzione il comando non viene lanciato
+                        else if(parser.checkParam(ins, "-ldh"))
+                            client.ls_func(ser, true, true, true);
+
                         else {
                             //comportamento di default senza parametri
                             client.ls_func(ser, false, false, false);
@@ -642,7 +637,10 @@ public class ClientClass implements Serializable{
 
                             }
                         }else {
-                            if (utils.contains(param, "-rf", 1)){
+                            if (parser.checkParam(ins, "-rf")){
+                                //NB: funziona con questo nome solo perchè è l'unica opzione, se aggiungi opzioni rinominalo
+                                //di lunghezza al massimo 1 l'opzione, ad esempio -r. Poichè le opzioni vengono separate
+                                //carattere per carattere e controllati che gli array siano uguali
                                 ArrayList<String> paths = new ArrayList<String>();
                                 //recupero i percorsi dei vari file
                                 for (int i = 2; i < param.length; i++) {
