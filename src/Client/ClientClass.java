@@ -20,6 +20,8 @@ import utils.FileClient;
 import utils.FileServerThread;
 import utils.Converter;
 
+import javax.swing.*;
+
 
 /**
 * Classe client principale. Il client mantiene lo stato, in questo modo il server risulta essere più semplice e non ha
@@ -213,7 +215,7 @@ public class ClientClass implements Serializable{
      * @throws IOException
      * @throws InterruptedException
      */
-    public boolean cp_func(ServerManagerInterface ser, String localPath, String remotePath) throws IOException, InterruptedException {
+    public boolean cp_func(ServerManagerInterface ser, String localPath, String remotePath, boolean internal) throws IOException, InterruptedException {
         //System.out.println("loc: "+localPath);
         //System.out.println("rem: "+remotePath);
         //recupero indice dello slave più libero
@@ -222,10 +224,18 @@ public class ClientClass implements Serializable{
         ServerInterface slave = ser.getSlaveNode(slaveIndex);
         //System.out.println("nodo scelto: "+ slave.getName());
         slave.startFileServer(port, remotePath);
-        fc = new FileClient(port, slave.getIp());
-        localPath = utils.cleanString(localPath, this);
-        fc.send(localPath, true);
-        return true;
+        if (internal) {
+            //se è un trasferimento di file interno al file system remoto
+            String loc = ser.getFileLocation(localPath);
+            ServerInterface ClSlave = ser.getSlaveNode(loc);
+            ClSlave.startFileClient(port, slave.getIp(), localPath);
+            return true;
+        }else {
+            fc = new FileClient(port, slave.getIp());
+            localPath = utils.cleanString(localPath, this);
+            fc.send(localPath, true);
+            return true;
+        }
     }
 
 
@@ -245,7 +255,7 @@ public class ClientClass implements Serializable{
      * @throws IOException
      * @throws InterruptedException
      */
-    public boolean cp_func(ServerManagerInterface ser, String path1, String path2, ArrayList<String> options, boolean verbose) throws IOException, InterruptedException {
+    public boolean cp_func(ServerManagerInterface ser, String path1, String path2, ArrayList<String> options, boolean verbose, boolean internal) throws IOException, InterruptedException {
         String[] optionsArr = new String[options.size()];
         optionsArr = options.toArray(optionsArr);
 
@@ -275,19 +285,32 @@ public class ClientClass implements Serializable{
 
         }
         else if(utils.contains(optionsArr, "-r")){
+            if(!internal) {
+                File f = new File(path1);
+                if (f.exists() && f.isDirectory()) {
 
-            File f = new File(path1);
-            if(f.exists() && f.isDirectory()){
+                    //System.out.println("Prova creazione directory su slave");
+                    //slave.mkdir("/home/enrico404/shDir/dirCopy");
+                    System.out.println("Inizio la copia ricorsiva di " + f.getName());
 
-                //System.out.println("Prova creazione directory su slave");
-                //slave.mkdir("/home/enrico404/shDir/dirCopy");
-                System.out.println("Inizio la copia ricorsiva di "+f.getName());
+                    recursiveCopy(f, ser, path1, path2, internal);
 
-                recursiveCopy(f, ser, path1, path2);
+                } else {
+                    utils.error_printer("La directory specificata non esiste!");
+                }
+            }else{
+                //file interno al file system remoto
 
-            }
-            else{
-                utils.error_printer("La directory specificata non esiste!");
+                if(ser.checkExists(path1)){
+
+                    System.out.println("Inizio la copia ricorsiva di " + path1);
+
+                    recursiveCopyInt(path1, path2, ser);
+
+                } else {
+                    utils.error_printer("La directory specificata non esiste!");
+                }
+
             }
         }
         else if (utils.contains(optionsArr, "-rm")){
@@ -326,7 +349,7 @@ public class ClientClass implements Serializable{
      * @throws IOException
      * @throws InterruptedException
      */
-    public void recursiveCopy(File f ,ServerManagerInterface ser, String localPath, String remotePath) throws IOException, InterruptedException {
+    public void recursiveCopy(File f ,ServerManagerInterface ser, String localPath, String remotePath, boolean internal) throws IOException, InterruptedException {
         if (f.isDirectory()){
 //            int slaveIndex = ser.freerNodeChooser();
 //            ServerInterface slave = ser.getSlaveNode(slaveIndex);
@@ -336,13 +359,45 @@ public class ClientClass implements Serializable{
             for(File sub: f.listFiles()){
                 String localPathNew = localPath+'/'+sub.getName();
                 String remotePathNew = remotePath+'/'+sub.getName();
-                recursiveCopy(sub, ser, localPathNew, remotePathNew);
+                recursiveCopy(sub, ser, localPathNew, remotePathNew, internal);
             }
         }else {
 
-            cp_func(ser, localPath, remotePath);
+            cp_func(ser, localPath, remotePath, internal);
         }
 
+    }
+
+    /**
+     *
+     *
+     * @param clientPath
+     * @param serverPath
+     * @param ser
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void recursiveCopyInt(String clientPath, String serverPath, ServerManagerInterface ser) throws IOException, InterruptedException {
+        for(ServerInterface slave: ser.getSlaveServers()) {
+
+            if(slave.isDirectory(clientPath) && slave.checkExists(clientPath)){
+                String[] param = new String[1];
+                param[0]=serverPath;
+               // System.out.println("Creo directory : "+serverPath);
+                //ser.mkdir(param, this.getCurrentPath());
+                slave.mkdir(serverPath);
+                for (File sub : slave.listFiles(clientPath)) {
+                    String newClientPath = clientPath+ '/' + sub.getName();
+                    String newSerPath = serverPath+ '/' + sub.getName();
+                    recursiveCopyInt(newClientPath, newSerPath, ser);
+                }
+            }else{
+               // System.out.println("copio: "+clientPath+" in :"+ serverPath);
+                cp_func(ser,clientPath,serverPath,true);
+            }
+
+
+        }
     }
 
     /**
@@ -465,7 +520,7 @@ public class ClientClass implements Serializable{
                 //lo sto trattando come se fosse una copia remota da cluster a client
                 ArrayList<String> options = new ArrayList<String>();
                 options.add("-rm");
-                if (!(cp_func(ser, filePath, tmpFile, options, false))) {
+                if (!(cp_func(ser, filePath, tmpFile, options, false,false))) {
                     utils.error_printer("Errore nella copia del file!");
                     System.err.println("");
                     return false;
@@ -657,6 +712,7 @@ public class ClientClass implements Serializable{
 
 
                     else if (ins.startsWith("cp")){
+
                         String[] param = ins.split(" ");
                         String originalDPath = param[param.length-1];
 
@@ -668,7 +724,7 @@ public class ClientClass implements Serializable{
                                 param[param.length-1] = utils.cleanString(param[param.length-1], client);
                                 param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
                                 // System.out.println("passo i parametri :"+param[1]+" "+ param[2]);
-                                if (!(client.cp_func(ser, param[i], param[param.length-1]))) {
+                                if (!(client.cp_func(ser, param[i], param[param.length-1], false))) {
                                     utils.error_printer("Errore nella copia del file!");
                                 }
                                 System.err.println("");
@@ -676,7 +732,7 @@ public class ClientClass implements Serializable{
                             }
                         }
                         // casi: slave->client oppure client(directory)->server
-                        else if((ins.startsWith("cp -rm") || ins.startsWith("cp -r")) && !(ins.startsWith("cp -rm -r") || ins.startsWith("cp -r -rm"))){
+                        else if((ins.startsWith("cp -rm") || ins.startsWith("cp -r")) && !((ins.startsWith("cp -rm -r") || ins.startsWith("cp -r -rm")) || ins.startsWith("cp -r -i"))){
                             for(int i=2; i<param.length-1;i++) {
                                 param[i] = utils.cleanString(param[i], client);
                                 param[param.length-1] = utils.cleanString(param[param.length-1], client);
@@ -686,7 +742,7 @@ public class ClientClass implements Serializable{
 
                                 ArrayList<String> options = new ArrayList<String>();
                                 options.add(param[1]);
-                                if (!(client.cp_func(ser, param[i], param[param.length-1], options, true))) {
+                                if (!(client.cp_func(ser, param[i], param[param.length-1], options, true, false))) {
                                     utils.error_printer("Errore nella copia del file!");
                                 }
                                 System.err.println("");
@@ -714,10 +770,50 @@ public class ClientClass implements Serializable{
                             ArrayList<String> options = new ArrayList<String>();
                             options.add(param[1]);
                             options.add(param[2]);
-                            if (!(client.cp_func(ser, param[3], param[4], options, true))) {
+                            if (!(client.cp_func(ser, param[3], param[4], options, true, false))) {
                                 utils.error_printer("Errore nella copia del file!");
                             }
                             System.err.println("");
+
+                        }
+                        else if(ins.startsWith("cp -i") && !((ins.startsWith("cp -i -r") || ins.startsWith("cp -r -i") ))){
+                            //caso solo cp -i
+                            for(int i=2; i<param.length-1;i++) {
+                                param[i] = utils.cleanString(param[i], client);
+                                param[param.length-1] = utils.cleanString(param[param.length-1], client);
+                                param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
+
+
+                                if (!(client.cp_func(ser, param[i], param[param.length-1], true))) {
+                                    utils.error_printer("Errore nella copia del file!");
+                                }
+                                System.err.println("");
+                                param[param.length-1] = originalDPath;
+                            }
+
+
+                        }
+                        else if(ins.startsWith("cp -i -r") || ins.startsWith("cp -r -i")){
+                            System.out.println("If giusto");
+                            //caso cp -i -r o cp -r -i
+                            for(int i=3; i<param.length-1;i++) {
+                                param[i] = utils.cleanString(param[i], client);
+                                param[param.length-1] = utils.cleanString(param[param.length-1], client);
+
+
+                                param[param.length-1] = client.genDestPath(param[i], param[param.length-1], ser);
+
+                                ArrayList<String> options = new ArrayList<String>();
+                                options.add(param[1]);
+                                options.add(param[2]);
+                                if (!(client.cp_func(ser, param[i], param[param.length-1], options, false, true))) {
+                                    utils.error_printer("Errore nella copia del file!");
+                                }
+                                System.err.println("");
+                                param[param.length-1] = originalDPath;
+                            }
+
+
 
                         }
                         else {

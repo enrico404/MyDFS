@@ -605,6 +605,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
        return true;
     }
 
+
+
     /**
      * Main della classe serverManager
      * @param args lista di indirizzi ip dei vari nodi slave appartenenti al cluster

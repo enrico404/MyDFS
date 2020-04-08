@@ -56,12 +56,13 @@ public class FileClient {
                     }
 
             }
-            System.out.println("");
+            if(verbose)
+                System.out.println("");
             out.flush();
             in.close();
             out.close();
         } catch (FileNotFoundException e) {
-            utils.error_printer("File non trovato");
+            utils.error_printer("File non trovato "+filePath);
         } catch (IOException e) {
             utils.error_printer("Errore nella scrittura del file");
         }finally {
