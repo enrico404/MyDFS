@@ -714,10 +714,12 @@ public class ClientClass implements Serializable {
                         }
                         //casi:  slave(directory)->client
                         else if (ParamParser.checkParam(ins,"-rm")) {
-                            param[3] = utils.cleanString(param[3], client);
-                            param[4] = utils.cleanString(param[4], client);
 
-                            if (!(param[4].startsWith("/"))) {
+                            int startIndex = ParamParser.getParamNumbers(ins);
+                            param[startIndex] = utils.cleanString(param[startIndex], client);
+                            param[startIndex+1] = utils.cleanString(param[startIndex+1], client);
+
+                            if (!(param[startIndex].startsWith("/"))) {
                                 utils.error_printer("Devi specificare un path assoluto sul client!");
                                 continue;
                             } else {
@@ -725,11 +727,11 @@ public class ClientClass implements Serializable {
 //                                String lastEl = tmp[tmp.length-1];
 //                                String dirName =  lastEl.substring(0, lastEl.length());
 //                                param[4] = param[4]+"/"+dirName;
-                                param[4] = client.genDestPath(param[3], param[4], ser);
+                                param[startIndex+1] = client.genDestPath(param[startIndex], param[startIndex+1], ser);
                             }
 
 
-                            if (!(client.cp_func(ser, param[3], param[4], ins, true))) {
+                            if (!(client.cp_func(ser, param[startIndex], param[startIndex+1], ins, true))) {
                                 utils.error_printer("Errore nella copia del file!");
                             }
                             System.err.println("");

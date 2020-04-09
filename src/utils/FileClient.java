@@ -59,9 +59,8 @@ public class FileClient {
             }
             if(verbose) {
                 System.out.println("");
-                System.out.println("Trasferimento completato in: "+ elapsedTime/1000+" Secondi");
-                System.out.println("");
-                System.out.print(">");
+                System.out.println("Trasferimento di: \""+utils.getFileName(filePath)+"\" completato in: "+ elapsedTime/1000+" Secondi");
+
             }
             out.flush();
             in.close();

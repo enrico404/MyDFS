@@ -95,7 +95,8 @@ public class FileServer {
                 }
                 if(verbose) {
                     System.out.println("");
-                    System.out.println("Trasferimento completato in: "+ elapsedTime/1000+" Secondi");
+                    System.out.println("Trasferimento di: \""+utils.getFileName(path)+"\" completato in: "+ elapsedTime/1000+" Secondi");
+
                 }
                 out.flush();
 
