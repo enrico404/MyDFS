@@ -81,10 +81,12 @@ public class FileServer {
                    // System.out.print("\rTranfering a file.. ");
                 long before = System.currentTimeMillis();
                 long total=0;
+                float elapsedTime=0;
+                long after =0;
                 while ((read = in.read(buffer)) > 0) {
                     out.write(buffer, 0, read);
-                    long after = System.currentTimeMillis();
-                    float elapsedTime = (after-before);
+                    after = System.currentTimeMillis();
+                    elapsedTime = (after-before);
                     total += read;
                     if(verbose)
                         if (elapsedTime > 0 && System.currentTimeMillis() % 60 == 0) {
@@ -92,8 +94,8 @@ public class FileServer {
                         }
                 }
                 if(verbose) {
-                   // System.out.print("\rFile transferred: " + path);
-                    //System.out.print("\r>\n");
+                    System.out.println("");
+                    System.out.println("Trasferimento completato in: "+ elapsedTime/1000+" Secondi");
                 }
                 out.flush();
 

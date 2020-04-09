@@ -591,6 +591,7 @@ public class ClientClass implements Serializable {
                 ClientClass client = new ClientClass(ser);
                 boolean exit = false;
                 while (!exit) {
+                    System.out.flush();
                     System.out.println("Inserisci comando...");
                     System.out.println(ConsoleColors.CYAN + "Path: " + client.getCurrentPath() + ConsoleColors.RESET);
                     System.out.println("");

@@ -44,11 +44,12 @@ public class FileClient {
             int read = 0;
             long total=0;
             long before = System.currentTimeMillis();
-
+            float elapsedTime=0;
+            long after =0;
             while((read = in.read(buffer)) > 0 ){
                 out.write(buffer, 0, read);
-                long after = System.currentTimeMillis();
-                float elapsedTime = (after-before);
+                after = System.currentTimeMillis();
+                elapsedTime = (after-before);
                 total += read;
                 if(verbose)
                     if (elapsedTime > 0 && System.currentTimeMillis() % 60 == 0) {
@@ -56,8 +57,12 @@ public class FileClient {
                     }
 
             }
-            if(verbose)
+            if(verbose) {
                 System.out.println("");
+                System.out.println("Trasferimento completato in: "+ elapsedTime/1000+" Secondi");
+                System.out.println("");
+                System.out.print(">");
+            }
             out.flush();
             in.close();
             out.close();
