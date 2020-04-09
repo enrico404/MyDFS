@@ -30,11 +30,28 @@ import javax.swing.*;
  * sistema e maggiore efficienza.
  */
 public class ClientClass implements Serializable {
+    /**
+     * percorso in cui si trova il client all'interno del file-system
+     */
     private String currentPath = "";
+    /**
+     * porta utilizzata per il trasferimento di file dal client verso il server
+     */
     private int port = 6668;
+    /**
+     * porta utilizzata per il trasferimento di file dal server verso il client
+     */
     private int port2 = 6669;
+    /**
+     * riferimento al FileClient, serve per mandare i file
+     */
     private FileClient fc = null;
+    /**
+     *  riferimento al FileServer, serve per ricevere i file
+     */
     private FileServerThread thread = null;
+
+
 
     /**
      * Costruttore per la classe client

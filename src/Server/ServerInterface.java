@@ -21,7 +21,7 @@ public interface ServerInterface extends Remote {
     ArrayList<MyFileType> ls_func(String path) throws RemoteException;
     ArrayList<MyFileType> ls_func(String path, boolean dirCapacity) throws RemoteException;
     boolean rm_func(String path) throws RemoteException;
-    boolean open() throws RemoteException; //dovrebbe essere un FileOutputStream oppure un BufferedOutputStream
+    boolean open() throws RemoteException;
     boolean selShared_dir(String path) throws RemoteException;
     String getSharedDir() throws RemoteException;
     boolean checkExists(String path) throws RemoteException;

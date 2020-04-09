@@ -11,6 +11,9 @@ import java.net.Socket;
  * @see FileServer
  */
 public class FileClient {
+    /**
+     * riferimento al socket per trasferire i file
+     */
     private Socket sock = null;
 
     /**

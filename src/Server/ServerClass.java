@@ -39,10 +39,23 @@ import utils.ConsoleColors;
  * @see FileServerThread
  */
 public class ServerClass extends UnicastRemoteObject implements ServerInterface {
+    /**
+     * Attributo contenente il nome del server
+     */
     private String name = "";
+    /**
+     * directory condivisa con gli altri server, deve essere la stessa per tutti i server
+     */
     private String sharedDir = "";
+    /**
+     * riferimento al FileServer, serve per ricevere i file
+     */
     private FileServerThread thread = null;
+    /**
+     * riferimento al FileClient, serve per mandare i file
+     */
     private FileClient fc = null;
+
 
     /**
      * Costruttore di default, va semplicemente a settare il nome del data node

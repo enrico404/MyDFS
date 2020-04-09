@@ -10,9 +10,21 @@ import java.io.IOException;
  * un thread di questa classe, in questo modo si potranno gestire trasferimenti multipli di file da più client
  */
 public class FileServerThread extends Thread{
-    int port;
-    String path;
-    FileServer fs;
+    /**
+     * porta utilizzata per il trasferimento del file
+     */
+    private int port;
+    /**
+     * percorso del nuovo file trasferito
+     */
+    private String path;
+    /**
+     * riferimento al fileServer che si occupa del trasferimento di file
+     */
+    private FileServer fs;
+    /**
+     * flag che indica alla classe se essere verbose o meno
+     */
     boolean verbose = true;
 
     /**

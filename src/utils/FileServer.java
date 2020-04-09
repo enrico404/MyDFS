@@ -19,9 +19,18 @@ import utils.utils;
  * @see FileServerThread
  */
 public class FileServer {
+    /**
+     * riferimento al socket per trasferire i file
+     */
     private ServerSocket servSock = new ServerSocket();
-    String path;
-    boolean verbose;
+    /**
+     * percorso del nuovo file trasferito, può contenere anche il nuovo nome
+     */
+    private String path;
+    /**
+     * flag che indica alla classe se essere verbose o meno
+     */
+    private boolean verbose;
 
     /**
      * Costruttore con parametri della classe, è possibile specificare se la classe deve essere verbosa o meno

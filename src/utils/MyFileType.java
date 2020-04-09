@@ -6,9 +6,21 @@ import java.io.Serializable;
  * Classe personalizzata per la gestione dei file all'interno del file system distribuito
  */
 public class MyFileType implements Serializable {
+    /**
+     * nome del file
+     */
     private String name;
+    /**
+     * tipo del file (File/Dir)
+     */
     private String type;
+    /**
+     * dimensione in byte del file
+     */
     private long size;
+    /**
+     * locazione fisica del file, contiene il nome del data nodes in cui si trova
+     */
     private String location;
 
     /**

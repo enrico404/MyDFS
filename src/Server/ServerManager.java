@@ -45,12 +45,28 @@ import utils.FileClient;
  */
 
 public class ServerManager extends UnicastRemoteObject implements ServerManagerInterface {
-    String name = "";
-    ArrayList<String> ipArray; //array di ip dei nodi slave
+    /**
+     * Attributo contenente il nome del server
+     */
+    private String name = "";
+    /**
+     * array degli ip dei nodi slave
+     */
+    private ArrayList<String> ipArray;
+    /**
+     * Percorso della directory condivisa con gli altri server
+     */
     private String sharedDir = "";
-    ArrayList<ServerInterface> slaveServers = new ArrayList<ServerInterface>();
-    int port = 6770;
+    /**
+     * Array contenente tutti i riferimenti ai nodi slave che gestisce
+     */
+    private ArrayList<ServerInterface> slaveServers = new ArrayList<ServerInterface>();
+    /**
+     * porta utilizzata per il trasferimento di file interni al cluster
+     */
+    private int port = 6770;
 
+    
     /**
      * Costruttore con parametri del nodeManager
      *
