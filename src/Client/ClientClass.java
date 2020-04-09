@@ -509,7 +509,7 @@ public class ClientClass implements Serializable {
                 String tmpFile = "/tmp/" + utils.getFileName(filePath);
 
                 //lo sto trattando come se fosse una copia remota da cluster a client
-
+                cmd += " -m";
                 if (!(cp_func(ser, filePath, tmpFile, cmd, false))) {
                     utils.error_printer("Errore nella copia del file!");
                     System.err.println("");
