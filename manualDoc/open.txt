@@ -1,4 +1,4 @@
-Apre un file nel filesystem distribuito.
+Apre un file nel filesystem distribuito.opzioni del comando
 
 Uso:
     open <filename>

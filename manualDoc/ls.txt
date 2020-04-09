@@ -13,3 +13,5 @@ Esempi d'uso:
     ls -d
     ls -l -d
     ls -l -d -h
+    ls -ldh
+    ls -lh

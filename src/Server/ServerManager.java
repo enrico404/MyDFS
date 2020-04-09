@@ -3,6 +3,7 @@ package Server;
 import Client.ClientClass;
 import utils.MyFileType;
 import utils.utils;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.Inet4Address;
@@ -18,6 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import utils.FileClient;
+
 /**
  * L'architettura del sistema è ispirata a quella di Hadoop nella sua prima versione, la più semplice.
  * L'architettura è divisa in due livelli:
@@ -33,15 +35,13 @@ import utils.FileClient;
  * e gestire la distribuzione del carico di lavoro che viene affidato ai vari Data Node (ServerClass). Svolge quindi un lavoro
  * da controllore. L'intera architettura è basata sulla tipologia Master - Slave. Il Node Manger svolge quindi la funzione di
  * Master e i vari Data Nodes svolgono la funzione di Slaves.
- *
+ * <p>
  * Gli slave nodes (ServerClass) si occupano invece di tenere memorizzati i dati. Gli slave nodes condividono tutti la stessa
  * struttura di directory, in questo modo è possibile bilanciare equamente lo spazio allocato su ogni slave.
- *
+ * <p>
  * Il serverManager è in grado di gestire un numero corposo di client allo stesso tempo e un numero di slave illimitato. Più slave
  * saranno presenti nel cluster, più sarà lo spazio a disposizion disponibile. La scalabilità orrizzontale del sistema è quindi una proprietà
  * di questa particolare tipologia di architettura.
- *
- *
  */
 
 public class ServerManager extends UnicastRemoteObject implements ServerManagerInterface {
@@ -53,7 +53,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Costruttore con parametri del nodeManager
-     * @param Name nome del nodeManger
+     *
+     * @param Name    nome del nodeManger
      * @param IpArray lista di indirizzi ip dei nodi slave
      * @throws RemoteException
      */
@@ -65,12 +66,13 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Funzione interna per la connessione del ServerManager ai vari nodi slave
+     *
      * @throws RemoteException
      * @throws NotBoundException
      * @throws MalformedURLException
      */
     private void connectToDataServers() throws RemoteException, NotBoundException, MalformedURLException {
-        for(String ip: ipArray){
+        for (String ip : ipArray) {
             ServerInterface ser = (ServerInterface) Naming.lookup(ip);
             slaveServers.add(ser);
 
@@ -81,13 +83,14 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     // INTERFACE METHODS
 
     /**
-     *  Metodo che ritorna l'indice del nodo slave con più spazio libero sul disco. Meccanismo di loadBalancing greedy.
+     * Metodo che ritorna l'indice del nodo slave con più spazio libero sul disco. Meccanismo di loadBalancing greedy.
+     *
      * @return indice del nodo slave più libero
-     * */
+     */
     public int freerNodeChooser() throws RemoteException {
         long maxSpace = slaveServers.get(0).getFreeSpace();
         int indexMax = 0;
-        if(slaveServers.size() > 1) {
+        if (slaveServers.size() > 1) {
             for (int i = 1; i < slaveServers.size(); i++) {
                 if (maxSpace < slaveServers.get(i).getFreeSpace()) {
                     maxSpace = slaveServers.get(i).getFreeSpace();
@@ -103,29 +106,31 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     public String getFileType(String path) throws RemoteException {
         String loc = getFileLocation(path);
         ServerInterface slave = getSlaveNode(loc);
-        if(slave.isDirectory(path)){
+        if (slave.isDirectory(path)) {
             return "Dir";
-        }else
+        } else
             return "File";
     }
 
     /**
      * Metodo il quale dato in input l'indice, restituisce il riferimento al nodo slave appartentende all'array slaveServers
+     *
      * @param index indice del nodo slave
      * @return riferimento al nodo slave
      */
-    public ServerInterface getSlaveNode(int index){
+    public ServerInterface getSlaveNode(int index) {
         return slaveServers.get(index);
     }
 
     /**
      * Meotodo il quale dato in input il nome del nodo slave, restituisce un riferimento al data node con tale nome
+     *
      * @param name nome del nodo da cercare
      * @return riferimento al nodo se esiste nell'array dei nodi slave istanziati, null altrimenti
      * @throws RemoteException
      */
     public ServerInterface getSlaveNode(String name) throws RemoteException {
-        for (ServerInterface slave: slaveServers){
+        for (ServerInterface slave : slaveServers) {
             if (slave.getName().equals(name)) return slave;
         }
         return null;
@@ -133,12 +138,16 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Metodo get per l'attributo slaveServers
+     *
      * @return riferimento all'array slaveServer
      */
-    public ArrayList<ServerInterface> getSlaveServers(){return slaveServers; }
+    public ArrayList<ServerInterface> getSlaveServers() {
+        return slaveServers;
+    }
 
     /**
      * Metodo che ritorna l'ip di questo nodo in formato ipV4
+     *
      * @return stringa contenente l'indirizzo ip in formato ipV4
      * @throws RemoteException
      * @throws SocketException
@@ -151,13 +160,14 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Metodo interno per verificare se data una lista di file questa contiene un file con il nome specificato nel secondo parametro
+     *
      * @param lista lista di file
-     * @param name nome che si sta cercando
+     * @param name  nome che si sta cercando
      * @return true se esiste all'interno della lista un file con quel nome, false altrimenti
      */
-    private boolean contains(ArrayList<MyFileType> lista, String name){
-        for (MyFileType el: lista){
-            if(el.getName().equals(name)) return true;
+    private boolean contains(ArrayList<MyFileType> lista, String name) {
+        for (MyFileType el : lista) {
+            if (el.getName().equals(name)) return true;
         }
         return false;
     }
@@ -165,6 +175,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     /**
      * Metodo ls relativo al ServerManager, viene chiamato dal metodo ls che risiede sul client. IN questa particolare
      * versione la capacità delle directory non viene calcolata per motivi di performance del comando
+     *
      * @param path percorso su cui si sta eseguendo il comando
      * @return lista di file che stanno su tutti gli slave in quel determinato percorso
      * @throws RemoteException
@@ -172,15 +183,15 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     @Override
     public ArrayList<MyFileType> ls_func(String path) throws RemoteException {
         ArrayList<MyFileType> totFiles = new ArrayList<MyFileType>();
-        for(ServerInterface slave: slaveServers){
+        for (ServerInterface slave : slaveServers) {
             //se esiste la cartella nello slave devo scrivere i suoi file
-            
-            if(slave.checkExists(path)) {
+
+            if (slave.checkExists(path)) {
                 //System.out.println("Scrivo file dello slave: "+ slave.getName());
                 ArrayList<MyFileType> tmpList = new ArrayList<MyFileType>();
                 tmpList = slave.ls_func(path, false);
-                for (MyFileType f: tmpList) {
-                    if(!(contains(totFiles, f.getName())))
+                for (MyFileType f : tmpList) {
+                    if (!(contains(totFiles, f.getName())))
                         totFiles.add(f);
 
                 }
@@ -191,7 +202,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Overloading del metodo ls precedente, in questa versione si va a chiedere anche la capacità delle directory
-     * @param path percorso in cui voglio eseguire il comando
+     *
+     * @param path        percorso in cui voglio eseguire il comando
      * @param dirCapacity variabile booleana che indica se voglio o meno la capacità
      * @return lista di file/directory presenti in quel percorso sui vari nodi slave
      * @throws RemoteException
@@ -204,13 +216,13 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         for (ServerInterface slave : slaveServers) {
             //se esiste la cartella nello slave devo scrivere i suoi file
             if (slave.checkExists(path)) {
-                for(MyFileType f: slave.ls_func(path, dirCapacity)){
-                    if(!(contains(totFiles, f))){
+                for (MyFileType f : slave.ls_func(path, dirCapacity)) {
+                    if (!(contains(totFiles, f))) {
                         totFiles.add(f);
-                    }else{
+                    } else {
                         //se è già presente vuol dire che è una directory e devo sommare le capacità
-                        if(f.getType().equals("Dir")){
-                            if(dirCapacity)
+                        if (f.getType().equals("Dir")) {
+                            if (dirCapacity)
                                 unifyCapacity(totFiles, f);
 
                         }
@@ -223,40 +235,45 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         return totFiles;
     }
 
-    private boolean unifyCapacity(ArrayList<MyFileType> array, MyFileType f){
-        for(MyFileType file: array){
-            if(file.getName().equals(f.getName())){
-                file.setSize(file.getSize()+f.getSize());
+    private boolean unifyCapacity(ArrayList<MyFileType> array, MyFileType f) {
+        for (MyFileType file : array) {
+            if (file.getName().equals(f.getName())) {
+                file.setSize(file.getSize() + f.getSize());
                 return true;
             }
         }
         return false;
     }
+
     /**
      * Funzione privata per verificare se all'interno dell'array è presente un file con lo stesso nome
+     *
      * @param array array di file in input
-     * @param f file da controllare
+     * @param f     file da controllare
      * @return true se è già presente, false altrimenti
      */
-    private boolean contains(ArrayList<MyFileType> array, MyFileType f){
-        for(MyFileType file: array){
-            if(file.getName().equals(f.getName())){
+    private boolean contains(ArrayList<MyFileType> array, MyFileType f) {
+        for (MyFileType file : array) {
+            if (file.getName().equals(f.getName())) {
                 return true;
             }
         }
         return false;
     }
+
     /**
      * Metodo get per lìattributo sharedDIr
+     *
      * @return valore dell'attributo sharedDir
      */
     @Override
-    public String getSharedDir(){
+    public String getSharedDir() {
         return sharedDir;
     }
 
     /**
      * Metodo per settare la directory condivisa sui vari nodi slave
+     *
      * @param path percorso della directory condivisa (il percorso deve essere comune per tutti i nodi slave)
      * @return true se il percorso viene settato con successo
      * @throws RemoteException
@@ -265,21 +282,22 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     public boolean selShared_dir(String path) throws RemoteException {
         sharedDir = path;
         System.out.println("Directory condivisa settata con successo!");
-        System.out.println("Percorso: "+ sharedDir);
+        System.out.println("Percorso: " + sharedDir);
         return true;
     }
 
     /**
      * Metodo per verificare l'esistenza di un determinato file/cartella all'interno dei nodi slave
+     *
      * @param path percorso al file/cartella da verificare
      * @return true se esiste il file/directory, false altrimenti
      * @throws RemoteException
      */
     @Override
     public boolean checkExists(String path) throws RemoteException {
-        for (ServerInterface slave: slaveServers){
+        for (ServerInterface slave : slaveServers) {
             //se esiste la cartella nello slave mi ci posso spostare dentro
-            if(slave.checkExists(path)) return true;
+            if (slave.checkExists(path)) return true;
         }
         return false;
     }
@@ -289,16 +307,17 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * Metodo rm relativo al ServerManager, viene chiamato dai vari client per l'eliminazioni di file dal cluster.
      * Si occupa di andare a verificare l'esistenza del file e poi viene chiamata l'apposita funzione dello slave che contiene
      * quel file per l'eliminazione
+     *
      * @param path percorso del file da eliminare
      * @return true in caso di successo, false altrimenti
      * @throws RemoteException
      */
     @Override
     public boolean rm_func(String path) throws RemoteException {
-        for(ServerInterface slave: slaveServers){
+        for (ServerInterface slave : slaveServers) {
             //se esiste il file nello slave, il file è supposto univoco
-            if(slave.checkExists(path)) {
-                if(slave.rm_func(path))
+            if (slave.checkExists(path)) {
+                if (slave.rm_func(path))
                     return true;
             }
 
@@ -309,6 +328,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Metodo per l'eliminazione ricorsiva di una directory presente nel cluster, fa uso della funzione "rm_func"
+     *
      * @param path percorso della directory da eliminare
      * @return true in caso di successo, false altrimenti
      * @throws RemoteException
@@ -316,24 +336,25 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     @Override
     public boolean rm_func_rec(String path) throws RemoteException {
         boolean err_canc = false;
-        for(ServerInterface slave: slaveServers){
+        for (ServerInterface slave : slaveServers) {
             //se esiste il file nello slave, il file è supposto univoco
-            if(slave.checkExists(path)) {
-                if(!(slave.rm_func_rec(path)))
+            if (slave.checkExists(path)) {
+                if (!(slave.rm_func_rec(path)))
                     err_canc = true;
             }
 
         }
-        if(err_canc == true) {
+        if (err_canc == true) {
             System.err.println("Cancellazione fallita!");
             return false;
-        }else
+        } else
             return true;
     }
 
     /**
      * Metodo cp relativo al ServerManager, per la copia di file tra i vari data nodes
-     * @param localPath path file sorgente
+     *
+     * @param localPath  path file sorgente
      * @param remotePath path file destinazione
      * @return true in caso di successo
      * @throws RemoteException
@@ -354,7 +375,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     }
 
     /**
-     *  Metodo per la copia ricorsiva di directory tra i dataNodes
+     * Metodo per la copia ricorsiva di directory tra i dataNodes
      *
      * @param clientPath path dir sorgente
      * @param serverPath path di destinazione
@@ -363,22 +384,22 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     @Override
     public void recursiveCopyInt(String clientPath, String serverPath) throws IOException {
-        for(ServerInterface slave: getSlaveServers()) {
+        for (ServerInterface slave : getSlaveServers()) {
 
-            if(slave.isDirectory(clientPath) && slave.checkExists(clientPath)){
+            if (slave.isDirectory(clientPath) && slave.checkExists(clientPath)) {
                 String[] param = new String[1];
-                param[0]=serverPath;
+                param[0] = serverPath;
                 // System.out.println("Creo directory : "+serverPath);
                 //ser.mkdir(param, this.getCurrentPath());
                 slave.mkdir(serverPath);
                 for (File sub : slave.listFiles(clientPath)) {
-                    String newClientPath = clientPath+ '/' + sub.getName();
-                    String newSerPath = serverPath+ '/' + sub.getName();
+                    String newClientPath = clientPath + '/' + sub.getName();
+                    String newSerPath = serverPath + '/' + sub.getName();
                     recursiveCopyInt(newClientPath, newSerPath);
                 }
-            }else{
+            } else {
                 // System.out.println("copio: "+clientPath+" in :"+ serverPath);
-                cp_func(clientPath,serverPath);
+                cp_func(clientPath, serverPath);
             }
 
 
@@ -388,6 +409,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Metodo che restitusìisce la locazione (nome del nodo slave) di un file/directory dato il percorso
+     *
      * @param path1 percorso del file/directory
      * @return stringa contenente il nome del data node nel quale il file è presente
      * @throws RemoteException
@@ -408,6 +430,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     /**
      * Deprecato, metodo per la copia di file nel nodo slave, ora la copia avviene attraverso l'apertura di un socket diretto
      * tra slave e client
+     *
      * @param slave riferimento al nodo slave
      * @param path1 percorso del file/directory sorgente
      * @param path2 percorso di destinazione
@@ -424,16 +447,17 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Metodo per la copia ricorsiva di directory , deprecato!!
-     * @deprecated
-     * @param f riferimento al file/directory
-     * @param localPath path i-esimo al file da copiare
+     *
+     * @param f          riferimento al file/directory
+     * @param localPath  path i-esimo al file da copiare
      * @param remotePath path di destinazione i-esimo
      * @throws IOException
      * @throws InterruptedException
+     * @deprecated
      */
     @Deprecated
     public void recursiveCopy(File f, String localPath, String remotePath) throws IOException, InterruptedException {
-        for(ServerInterface slave: slaveServers) {
+        for (ServerInterface slave : slaveServers) {
             if (f.isDirectory()) {
                 slave.mkdir(remotePath);
                 for (File sub : f.listFiles()) {
@@ -442,7 +466,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     recursiveCopy(sub, localPathNew, remotePathNew);
                 }
             } else {
-                if(checkExists(localPath))
+                if (checkExists(localPath))
                     cp_func_slave(slave, localPath, remotePath);
             }
         }
@@ -453,9 +477,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * Metodo move del ServerManager, si va ad identificare il nodo contenente il file/directory specificata
      * e si cambia il percorso. Non c'è un vero e proprio trasferimento di file, ma solo un cambio di posizione
      * all'interno del file system locale, cambiando il nome. Ad es. ./dir1/file1.txt diventa  ./dir2/file1.txt
+     *
      * @param path1 percorso sorgente al file/directory che si vuole spostare
      * @param path2 percorso di destinazione del file/directory
-     * @param loc1 nome del nodo su cui il file si trova
+     * @param loc1  nome del nodo su cui il file si trova
      * @return true in caso di successo, false altrimenti
      * @throws IOException
      * @throws InterruptedException
@@ -465,27 +490,26 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     public boolean move(String path1, String path2, String loc1) throws IOException, InterruptedException {
         File f1 = new File(path1);
         File f2 = new File(path2);
-        if (f1.isFile() && f2.isDirectory()){
+        if (f1.isFile() && f2.isDirectory()) {
             //si recupera il nodo slave e si cmabia il percorso dei file/directory
             // es : s1 -> s1
             String fileName = utils.getFileName(path1);
-            path2 += "/"+fileName;
-            if(path1 != path2) {
+            path2 += "/" + fileName;
+            if (path1 != path2) {
                 ServerInterface slave = getSlaveNode(loc1);
                 slave.move(path1, path2);
             }
 
-        }
-        else if(f1.isDirectory() && f2.isDirectory()){
-            if(f1.exists()){
+        } else if (f1.isDirectory() && f2.isDirectory()) {
+            if (f1.exists()) {
                 String fileName = utils.getFileName(path1);
-                path2 += "/"+fileName;
+                path2 += "/" + fileName;
                 //la copia ricorsiva non è più necessaria, devo solo cambiare i nomi come nel
                 //caso precendente
                 //System.out.println("Inizio la copia ricorsiva di "+f1.getName());
                 //recursiveCopy(f1, path1, path2);
-                for(ServerInterface slave: slaveServers) {
-                    if(path1 != path2) {
+                for (ServerInterface slave : slaveServers) {
+                    if (path1 != path2) {
                         slave.move(path1, path2);
                     }
                 }
@@ -535,14 +559,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //                slave1.rm_func(path1);
 //
 //            }
-            //casi impossibili da gestire: file -> file e  dir -> file
-            else {
-                System.err.println("Errore nella sintassi del comando");
-                return false;
+        //casi impossibili da gestire: file -> file e  dir -> file
+        else {
+            System.err.println("Errore nella sintassi del comando");
+            return false;
 
-            }
-
-
+        }
 
 
         return true;
@@ -552,36 +574,37 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * Metodo per la creazione di directory sui nodi slave, dato in input il nome di una/più directory viene creata la stessa
      * directory per ogni slave nodes, in questo modo si mantiene una struttura del file system coerente per ogni nodo
      * e si riesce a scalare lo spazio di memorizzazione molto meglio
-     * @param param percorsi delle nuove directory che si vogliono creare
+     *
+     * @param param       percorsi delle nuove directory che si vogliono creare
      * @param currentPath percorso attuale in cui si trova il client all'interno del file system
      * @return true i caso di successo, false altrimenti
      * @throws RemoteException
      */
     @Override
     public boolean mkdir(String[] param, String currentPath) throws RemoteException {
-        for (int i=1; i<param.length; i++){
+        for (int i = 1; i < param.length; i++) {
 
-            if(param[i].startsWith("./")){
+            if (param[i].startsWith("./")) {
                 //caso ./dir/new_dir
 
                 //dato path relativo trovo l'assoluto tolto nome della nuova dir -> /home/user/dir
                 param[i] = param[i].substring(1, param[i].length());
-                param[i] = currentPath+param[i];
+                param[i] = currentPath + param[i];
                 String[] tmpArray = param[i].split("/");
                 String tmp = "";
-                for(int j=0; j<tmpArray.length-1; j++){
-                    tmp += tmpArray[j]+"/";
+                for (int j = 0; j < tmpArray.length - 1; j++) {
+                    tmp += tmpArray[j] + "/";
                 }
 
 //                String loc = getFileLocation(tmp);
 //                ServerInterface slave = getSlaveNode(loc);
-                for(ServerInterface slave: slaveServers)
+                for (ServerInterface slave : slaveServers)
                     slave.mkdir(param[i]);
-            }else {
+            } else {
                 //caso in cui scrivo solo il nome della cartella
                 int slaveIndex = freerNodeChooser();
                 //ServerInterface slave = getSlaveNode(slaveIndex);
-                for(ServerInterface slave: slaveServers)
+                for (ServerInterface slave : slaveServers)
                     if (slave.checkExists(currentPath))
                         slave.mkdir(currentPath + "/" + param[i]);
             }
@@ -601,8 +624,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     @Override
     public long getFreeSpace() throws RemoteException {
-        long freeSpace =0;
-        for(ServerInterface slave: slaveServers){
+        long freeSpace = 0;
+        for (ServerInterface slave : slaveServers) {
             freeSpace += slave.getFreeSpace();
         }
         return freeSpace;
@@ -611,13 +634,14 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     /**
      * Metodo per il calcolo della capacità totale del cluster, non va a tenere in considerazione lo spazio già
      * allocato sui vari nodi slave, ma da una stima abbastanza precisa sulla capacità totale.
+     *
      * @return capacità totale del cluster in formato long
      * @throws RemoteException
      */
     @Override
     public long getClusterCapacity() throws RemoteException {
-        long totCapacity =0;
-        for(ServerInterface slave: slaveServers){
+        long totCapacity = 0;
+        for (ServerInterface slave : slaveServers) {
             totCapacity += slave.getCapacity();
         }
         return totCapacity;
@@ -626,11 +650,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     /**
      * Metodo per il balancing dello spazio allocato sul cluster, nella versione attuale non viene utilizzato. Si potrebbe
      * integrare in futuro nel sistema
+     *
      * @return true in caso di successo
      * @throws RemoteException
      */
     // metodo per il balancing del cluster, non più necessario
-       public boolean balance() throws RemoteException {
+    public boolean balance() throws RemoteException {
 //        ArrayList<MyFileType> totFiles = ls_func(sharedDir, true);
 //        totFiles.sort(new Comparator<MyFileType>() {
 //            @Override
@@ -644,13 +669,13 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //            System.out.println("Name: "+f.getName());
 //            System.out.println("Size: "+f.getSize());
 //        }
-       return true;
+        return true;
     }
-
 
 
     /**
      * Main della classe serverManager
+     *
      * @param args lista di indirizzi ip dei vari nodi slave appartenenti al cluster
      * @throws RemoteException
      */
@@ -658,7 +683,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
         ArrayList<String> ipArr = new ArrayList<String>();
 
-        for (String ip: args){
+        for (String ip : args) {
             ipArr.add(ip);
         }
 
@@ -666,9 +691,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             System.setSecurityManager(new SecurityManager());
         }
 
-        try{
+        try {
             List<Inet4Address> ips = utils.getInet4Addresses();
-            if(ips.size() >= 1 ) {
+            if (ips.size() >= 1) {
                 String myIp = ips.get(0).toString().substring(1);
                 System.setProperty("java.rmi.server.hostname", myIp);
                 ServerManager serM = new ServerManager("ServerManager", ipArr);
@@ -680,10 +705,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 //connetto il serverManger ai vari dataServer specificati
                 serM.connectToDataServers();
                 //serM.balance();
-            }else {
-                    System.err.println("Non sei connesso ad una rete locale");
-                }
-        }catch(Exception e){
+            } else {
+                System.err.println("Non sei connesso ad una rete locale");
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
