@@ -183,7 +183,7 @@ public class ClientClass implements Serializable {
             }
             return true;
         } else {
-            if (!path.equals("..")) {
+            if (!path.equals("..") && !path.equals(".")) {
                 path = utils.cleanString(path, this);
                 boolean exists = ser.checkExists(path);
                 if (exists) {
@@ -248,20 +248,23 @@ public class ClientClass implements Serializable {
      * @throws InterruptedException
      */
     public boolean cp_func(ServerManagerInterface ser, String localPath, String remotePath) throws IOException {
-        //System.out.println("loc: "+localPath);
-        //System.out.println("rem: "+remotePath);
-        //recupero indice dello slave più libero
-        int slaveIndex = ser.freerNodeChooser();
-        // recupero il reference al nodo slave
-        ServerInterface slave = ser.getSlaveNode(slaveIndex);
-        //System.out.println("nodo scelto: "+ slave.getName());
-        slave.startFileServer(port, remotePath);
+        File f = new File(localPath);
+        if(f.exists()) {
+            //System.out.println("loc: "+localPath);
+            //System.out.println("rem: "+remotePath);
+            //recupero indice dello slave più libero
+            int slaveIndex = ser.freerNodeChooser();
+            // recupero il reference al nodo slave
+            ServerInterface slave = ser.getSlaveNode(slaveIndex);
+            //System.out.println("nodo scelto: "+ slave.getName());
+            slave.startFileServer(port, remotePath);
 
-        fc = new FileClient(port, slave.getIp());
-        localPath = utils.cleanString(localPath, this);
-        fc.send(localPath, true);
-        return true;
-
+            fc = new FileClient(port, slave.getIp());
+            localPath = utils.cleanString(localPath, this);
+            fc.send(localPath, true);
+            return true;
+        }
+        return false;
     }
 
 
@@ -776,7 +779,7 @@ public class ClientClass implements Serializable {
                         } else if (ParamParser.checkParam(ins,"-ri")) {
                             //caso cp -i -r o cp -r -i
                             param[param.length-1] = utils.cleanString(param[param.length-1], client);
-                            System.out.println("Dest pathj: "+ param[param.length-1]);
+                            //System.out.println("Dest pathj: "+ param[param.length-1]);
 
 
                             int startIndex = ParamParser.getParamNumbers(ins);
@@ -784,11 +787,16 @@ public class ClientClass implements Serializable {
                                 param[i] = utils.cleanString(param[i], client);
                                 param[param.length - 1] = utils.cleanString(param[param.length - 1], client);
                                 param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser);
-                                System.out.println("Dest path2: "+ param[param.length-1]);
+//                                System.out.println("source path: "+ param[i]);
+//                                System.out.println("Dest path: "+ param[param.length-1]);
 
                                 System.out.println("Inizio la copia ricorsiva di " + param[i]);
-                                ser.recursiveCopyInt(param[i], param[param.length - 1]);
 
+                                File f = new File(param[i]);
+                                if(f.exists())
+                                    ser.recursiveCopyInt(param[i], param[param.length - 1]);
+                                else
+                                    utils.error_printer("Errore nella copia della directory, controlla che i percorsi siamo corretti!");
 
                                 param[param.length - 1] = originalDPath;
                             }

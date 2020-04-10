@@ -467,6 +467,8 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                 System.out.println("Inserisci il nome del server: ");
                 Scanner in = new Scanner(System.in);
                 String name = in.nextLine();
+
+               // String name = utils.getMacAddresses();
                 ServerClass ser = new ServerClass(name);
                 Naming.rebind("//" + myIp + "/" + name, ser);
                 System.out.println();

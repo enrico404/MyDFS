@@ -66,7 +66,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     private int port = 6770;
 
-    
+
     /**
      * Costruttore con parametri del nodeManager
      *
@@ -377,6 +377,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     @Override
     public boolean cp_func(String localPath, String remotePath) throws IOException {
+
+
         //recupero indice dello slave più libero
         int slaveIndex = freerNodeChooser();
         // recupero il reference al nodo slave
@@ -386,8 +388,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         //se è un trasferimento di file interno al file system remoto
         String loc = getFileLocation(localPath);
         ServerInterface ClSlave = getSlaveNode(loc);
-        ClSlave.startFileClient(port, slave.getIp(), localPath);
-        return true;
+
+        if (ClSlave.checkExists(localPath)) {
+            ClSlave.startFileClient(port, slave.getIp(), localPath);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -414,10 +420,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     recursiveCopyInt(newClientPath, newSerPath);
                 }
             } else {
-                // System.out.println("copio: "+clientPath+" in :"+ serverPath);
+//                System.out.println("copio: "+clientPath+" in :"+ serverPath);
                 cp_func(clientPath, serverPath);
             }
-
 
         }
     }

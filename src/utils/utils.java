@@ -33,6 +33,25 @@ public class utils {
     }
 
     /**
+     * Metodo per ottenere l'indirizzo MAC della macchina
+     * @return stringa contenente il mac address
+     * @throws SocketException
+     */
+    public static String getMacAddresses() throws SocketException {
+        StringBuilder sb = new StringBuilder();
+        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+        for (NetworkInterface netIn : Collections.list(nets)) {
+            byte[] mac = netIn.getHardwareAddress();
+            if (mac != null) {
+                for (int i = 0; i < mac.length; i++) {
+                    sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
      * Metodo per controllare se un array contiene una determinata stringa
      * @param array array di stringhe in input
      * @param val Stringa da cercare nell'array
