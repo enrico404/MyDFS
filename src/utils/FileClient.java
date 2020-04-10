@@ -37,7 +37,10 @@ public class FileClient {
     }
 
     /**
-     * Metodo per inviare i file verso il server del file transfer system
+     * Metodo per inviare i file verso il server del file transfer system. Per il trasferimento di file si usa
+     * JAVA.NIO con i metodi transferTO e transferFrom, si delega quindi il carico del trasferimento dei file al sistema
+     * operativo, se il sistema presenta un meccanismo di DMA, il trasferimento sarà il più rapido possibile e senza alcun
+     * carico sulla CPU
      *
      * @param filePath percorso sorgente del file da inviare
      * @throws IOException
@@ -48,24 +51,28 @@ public class FileClient {
             Path path = Paths.get(filePath);
             inChannel = FileChannel.open(path);
 
-            ByteBuffer buffer = ByteBuffer.allocate(4096);
-            int read = 0;
+            //ByteBuffer buffer = ByteBuffer.allocate(4096);
+            long read = 0;
             long total = 0;
             long before = System.currentTimeMillis();
             float elapsedTime = 0;
             long after = 0;
+            long bufferDim = 4096;
+            while ((read = inChannel.transferTo(total, bufferDim, sock)) > 0) {
+                //buffer.flip();
+                //sock.write(buffer);
 
-            while ((read = inChannel.read(buffer)) > 0) {
-                buffer.flip();
-                sock.write(buffer);
-                after = System.currentTimeMillis();
-                elapsedTime = (after - before);
                 total += read;
-                buffer.clear();
-                if (verbose)
-                    if (elapsedTime > 0 && System.currentTimeMillis() % 60 == 0) {
+                if (verbose) {
+                    after = System.currentTimeMillis();
+                    elapsedTime = (after - before);
+
+                    //  buffer.clear();
+
+                    if (elapsedTime > 0 && System.currentTimeMillis() % 100 == 0) {
                         System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S");
                     }
+                }
             }
 
             if (verbose) {

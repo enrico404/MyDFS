@@ -6,10 +6,8 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ScatteringByteChannel;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -81,7 +79,10 @@ public class FileServer {
     }
 
     /**
-     * Metodo per far partire il thread e metterlo in ascolto di nuove connessioni
+     * Metodo per far partire il thread e metterlo in ascolto di nuove connessioni. Per il trasferimento di file si usa
+     * JAVA.NIO con i metodi transferTO e transferFrom, si delega quindi il carico del trasferimento dei file al sistema
+     * operativo, se il sistema presenta un meccanismo di DMA, il trasferimento sarà il più rapido possibile e senza alcun
+     * carico sulla CPU
      *
      * @see FileServerThread
      */
@@ -95,30 +96,35 @@ public class FileServer {
                 SocketChannel sock = servSock.accept();
                 //System.out.print("\rAccepted connection.. " + sock);
                 Path OutPath = Paths.get(path);
-
                 outChannel = FileChannel.open(OutPath, EnumSet.of(StandardOpenOption.CREATE,
                         StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE
                 ));
 
-                ByteBuffer buffer = ByteBuffer.allocate(4096);
-                int read = 0;
+                //ByteBuffer buffer = ByteBuffer.allocate(4096);
+                long read = 0;
                 long before = System.currentTimeMillis();
                 long total = 0;
                 float elapsedTime = 0;
                 long after = 0;
+                // This method is potentially much more efficient than a simple loop that reads from the source channel and writes to this channel.
+                // Many operating systems can transfer bytes directly from the source channel into the filesystem cache without actually copying them
+                // it uses the DMA
+                long bufferDim = 4096;
+                while ((read = outChannel.transferFrom(sock, total, bufferDim)) > 0) {
+                    // buffer.flip();
+                    // outChannel.write(buffer);
 
-                while ((read = sock.read(buffer)) > 0) {
-                    buffer.flip();
-                    outChannel.write(buffer);
-                    after = System.currentTimeMillis();
-                    elapsedTime = (after - before);
                     total += read;
-                    buffer.clear();
-                    if (verbose)
-                        if (elapsedTime > 0 && System.currentTimeMillis() % 60 == 0) {
+                    if (verbose) {
+                        after = System.currentTimeMillis();
+                        elapsedTime = (after - before);
+
+                        // buffer.clear();
+
+                        if (elapsedTime > 0 && System.currentTimeMillis() % 100 == 0) {
                             System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S");
                         }
-
+                    }
                 }
 
                 if (verbose) {
@@ -127,11 +133,15 @@ public class FileServer {
                 }
 
 
-                System.out.println("FIle: " + path + " traferito con successo");
+                System.out.println("File: " + path + " traferito con successo");
                 outChannel.close();
                 sock.close();
 
-            } catch (IOException e) {
+            }catch (NoSuchFileException e){
+                //per i trasferimenti ricorsivi viene fuori questa eccezzione, ma i file vengono  trasferiti comunque
+                //correttamente
+            }
+            catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 if (outChannel != null) {

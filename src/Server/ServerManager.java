@@ -378,20 +378,24 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     @Override
     public boolean cp_func(String localPath, String remotePath) throws IOException {
 
+        if(!checkExists(remotePath)) {
+            //recupero indice dello slave più libero
+            int slaveIndex = freerNodeChooser();
+            // recupero il reference al nodo slave
+            ServerInterface slave = getSlaveNode(slaveIndex);
+            //System.out.println("nodo scelto: "+ slave.getName());
+            slave.startFileServer(port, remotePath);
+            //se è un trasferimento di file interno al file system remoto
+            if (checkExists(localPath)) {
+                // System.out.println("localpath: "+localPath);
+                String loc = getFileLocation(localPath);
+                //System.out.println("locazione: "+loc);
+                ServerInterface ClSlave = getSlaveNode(loc);
 
-        //recupero indice dello slave più libero
-        int slaveIndex = freerNodeChooser();
-        // recupero il reference al nodo slave
-        ServerInterface slave = getSlaveNode(slaveIndex);
-        //System.out.println("nodo scelto: "+ slave.getName());
-        slave.startFileServer(port, remotePath);
-        //se è un trasferimento di file interno al file system remoto
-        String loc = getFileLocation(localPath);
-        ServerInterface ClSlave = getSlaveNode(loc);
+                ClSlave.startFileClient(port, slave.getIp(), localPath);
+                return true;
 
-        if (ClSlave.checkExists(localPath)) {
-            ClSlave.startFileClient(port, slave.getIp(), localPath);
-            return true;
+            }
         }
         return false;
     }
@@ -411,7 +415,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             if (slave.isDirectory(clientPath) && slave.checkExists(clientPath)) {
                 String[] param = new String[1];
                 param[0] = serverPath;
-                // System.out.println("Creo directory : "+serverPath);
+                //System.out.println("Creo directory : "+serverPath);
                 //ser.mkdir(param, this.getCurrentPath());
                 slave.mkdir(serverPath);
                 for (File sub : slave.listFiles(clientPath)) {
@@ -420,7 +424,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     recursiveCopyInt(newClientPath, newSerPath);
                 }
             } else {
-//                System.out.println("copio: "+clientPath+" in :"+ serverPath);
+                //System.out.println("copio: "+clientPath+" in: "+ serverPath);
                 cp_func(clientPath, serverPath);
             }
 
@@ -437,7 +441,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     @Override
     public String getFileLocation(String path1) throws RemoteException {
-        String location = null;
+        String location = "";
         for (ServerInterface slave : slaveServers) {
             //se esiste la cartella nello slave devo scrivere i suoi file
 
