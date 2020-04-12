@@ -42,6 +42,11 @@ public class MyFileType implements Serializable {
         location = Location;
         path = Path;
     }
+
+    /**
+     * Getter dell'attributo name
+     * @return stringa contente il nome del file
+     */
     public String getName() {
         return name;
     }

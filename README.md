@@ -25,9 +25,9 @@ Maggiori informazioni nella [documentazione](./Documentation/index.html)
 
 # Istruzioni per l'uso
 
-## Dipendeze
+## Dipendenze
 
-- java
+- java11
 
 NB: il software è stato testato e sviluppato su Linux, l'esecuzione corretta su altri sistemi operativi non è garantita!
 
