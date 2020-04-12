@@ -1,6 +1,6 @@
 package utils;
 
-import javax.xml.crypto.Data;
+
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -40,6 +40,11 @@ public class FileServer {
     private boolean verbose;
 
     /**
+     * Dimensione del file che verrà trasferito
+     */
+    private long size;
+
+    /**
      * Costruttore con parametri della classe, è possibile specificare se la classe deve essere verbosa o meno
      *
      * @param Verbose flag che indica alla classe se essere verbose
@@ -60,11 +65,12 @@ public class FileServer {
      * @return true in caso di successo
      * @throws IOException
      */
-    public boolean bind(int Port, String Path) throws IOException {
+    public boolean bind(int Port, String Path, long Size) throws IOException {
         if (!(servSock.socket().isBound())) {
             servSock.socket().bind(new InetSocketAddress(Port));
         }
         path = Path;
+        size = Size;
         return true;
     }
 
@@ -74,8 +80,9 @@ public class FileServer {
      *
      * @param Path percorso in cui verrà trasferito il file
      */
-    public void setPath(String Path) {
+    public void setPath(String Path, long Size) {
         path = Path;
+        size=Size;
     }
 
     /**
@@ -122,7 +129,9 @@ public class FileServer {
                         // buffer.clear();
 
                         if (elapsedTime > 0 && System.currentTimeMillis() % 100 == 0) {
-                            System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S");
+                            System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S\t | " +
+                                    "Scaricati: "+Converter.byte_to_humanS(total)+" / "+ Converter.byte_to_humanS(size));
+
                         }
                     }
                 }

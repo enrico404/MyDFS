@@ -20,6 +20,7 @@ import java.util.List;
 
 import utils.FileClient;
 
+
 /**
  * L'architettura del sistema è ispirata a quella di Hadoop nella sua prima versione, la più semplice.
  * L'architettura è divisa in due livelli:
@@ -378,15 +379,16 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     @Override
     public boolean cp_func(String localPath, String remotePath) throws IOException {
 
-        if(!checkExists(remotePath)) {
+        if (!checkExists(remotePath)) {
             //recupero indice dello slave più libero
             int slaveIndex = freerNodeChooser();
             // recupero il reference al nodo slave
             ServerInterface slave = getSlaveNode(slaveIndex);
             //System.out.println("nodo scelto: "+ slave.getName());
-            slave.startFileServer(port, remotePath);
+
             //se è un trasferimento di file interno al file system remoto
             if (checkExists(localPath)) {
+                slave.startFileServer(port, remotePath, getFile(localPath).getSize());
                 // System.out.println("localpath: "+localPath);
                 String loc = getFileLocation(localPath);
                 //System.out.println("locazione: "+loc);
@@ -462,11 +464,13 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @return true in caso di successo, false altrimenti
      * @throws IOException
      * @throws InterruptedException
+     * @deprecated
      */
+    @Deprecated
     public boolean cp_func_slave(ServerInterface slave, String path1, String path2) throws IOException, InterruptedException {
-        slave.startFileServer(port, path2);
+        slave.startFileServer(port, path2, getFile(path1).getSize());
         FileClient fc = new FileClient(port, slave.getIp());
-        fc.send(path1, false);
+        fc.send(path1, false, 0);
         return true;
     }
 
@@ -513,9 +517,14 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     @Override
     public boolean move(String path1, String path2, String loc1) throws IOException, InterruptedException {
-        File f1 = new File(path1);
-        File f2 = new File(path2);
-        if (f1.isFile() && f2.isDirectory()) {
+
+
+        MyFileType f1 = getFile(path1);
+        MyFileType f2 = getFile(path2);
+//        System.out.println("path1: "+path1);
+//        System.out.println("path2: "+path2);
+//        System.out.println(f1.getType().equals("File")+" "+f2.getType().equals("Dir"));
+        if (f1.getType().equals("File") && f2.getType().equals("Dir")) {
             //si recupera il nodo slave e si cmabia il percorso dei file/directory
             // es : s1 -> s1
             String fileName = utils.getFileName(path1);
@@ -525,21 +534,20 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 slave.move(path1, path2);
             }
 
-        } else if (f1.isDirectory() && f2.isDirectory()) {
-            if (f1.exists()) {
-                String fileName = utils.getFileName(path1);
-                path2 += "/" + fileName;
-                //la copia ricorsiva non è più necessaria, devo solo cambiare i nomi come nel
-                //caso precendente
-                //System.out.println("Inizio la copia ricorsiva di "+f1.getName());
-                //recursiveCopy(f1, path1, path2);
-                for (ServerInterface slave : slaveServers) {
-                    if (path1 != path2) {
-                        slave.move(path1, path2);
-                    }
-                }
+        } else if (f1.getType().equals("Dir") && f2.getType().equals("Dir")) {
 
+            String fileName = utils.getFileName(path1);
+            path2 += "/" + fileName;
+            //la copia ricorsiva non è più necessaria, devo solo cambiare i nomi come nel
+            //caso precendente
+            //System.out.println("Inizio la copia ricorsiva di "+f1.getName());
+            //recursiveCopy(f1, path1, path2);
+            for (ServerInterface slave : slaveServers) {
+                if (path1 != path2) {
+                    slave.move(path1, path2);
+                }
             }
+
 
         }
 //        if (loc1.equals(loc2)){
@@ -697,6 +705,22 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         return true;
     }
 
+    @Override
+    public MyFileType getFile(String path) throws RemoteException {
+
+        String name = utils.getFileName(path);
+        String newPath = utils.pathWithoutLast(path);
+        ArrayList<MyFileType> allFiles = ls_func(newPath);
+
+        for (MyFileType f : allFiles) {
+            if (f.getName().equals(name)) {
+                //System.out.println("File trovato: "+f.getName()+" dimensione: "+ f.getSize());
+                return f;
+            }
+        }
+        //se non esiste ritorno file vuoto
+        return new MyFileType("", "", 0,"", "");
+    }
 
     /**
      * Main della classe serverManager

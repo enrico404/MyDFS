@@ -36,4 +36,5 @@ public interface ServerManagerInterface extends Remote {
     long getClusterCapacity() throws RemoteException;
     String getFileType(String path) throws RemoteException;
     void recursiveCopyInt(String clientPath, String serverPath) throws IOException, RemoteException;
+    MyFileType getFile(String path) throws RemoteException;
 }

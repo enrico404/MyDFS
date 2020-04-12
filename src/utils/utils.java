@@ -105,6 +105,10 @@ public class utils {
             return cleanedStr;
         }
 
+        if(cleanedStr.equals("..")){
+            cleanedStr =  pathWithoutLast(client.getCurrentPath());
+        }
+
         if(cleanedStr.startsWith("./")){
             cleanedStr = cleanedStr.substring(1, cleanedStr.length());
             cleanedStr = client.getCurrentPath()+cleanedStr;
@@ -125,6 +129,23 @@ public class utils {
      */
     public static void error_printer(String error){
         System.err.println(ConsoleColors.RED+error+ConsoleColors.RESET);
+    }
+
+
+    /**
+     * Metodo per ottenere il percorso senza l'ultimo file/directory
+     * @param fullPath percorso completo
+     * @return nuovo percorso
+     */
+    public static String pathWithoutLast(String fullPath){
+        String[] list = fullPath.split("/");
+        String newPath = "";
+
+        for(int i=0; i<list.length-1; i++){
+            newPath += list[i]+"/";
+        }
+        return newPath;
+
     }
 
 //    public static String relative_to_absolute(String path, String currentPath){

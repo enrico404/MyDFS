@@ -24,17 +24,23 @@ public class MyFileType implements Serializable {
     private String location;
 
     /**
+     * Percorso assoluto al file
+     */
+    private String path;
+
+    /**
      * Costruttore con parametri della classe
      * @param Name nome del file
      * @param Type tipo del file: File/Dir
      * @param Size dimensione in bytes del file
      * @param Location percorso del file
      */
-    public MyFileType(String Name, String Type, long Size, String Location){
+    public MyFileType(String Name, String Type, long Size, String Location, String Path){
         name = Name;
         type = Type;
         size = Size;
         location = Location;
+        path = Path;
     }
     public String getName() {
         return name;
@@ -94,6 +100,14 @@ public class MyFileType implements Serializable {
      */
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    /**
+     * Getter dell'attributo path
+     * @return stringa contenente il percorso assoluto al file
+     */
+    public String getPath(){
+        return path;
     }
 
 

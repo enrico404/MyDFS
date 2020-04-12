@@ -167,7 +167,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                 } else {
                     type = "Dir";
                 }
-                MyFileType f = new MyFileType(file.getName(), type, file.length(), name);
+                MyFileType f = new MyFileType(file.getName(), type, file.length(), name, file.getAbsolutePath());
                 result.add(f);
 
             }
@@ -206,7 +206,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                         type = "Dir";
                         size = getDirSize(file);
                     }
-                    MyFileType f = new MyFileType(file.getName(), type, size, name);
+                    MyFileType f = new MyFileType(file.getName(), type, size, name, file.getAbsolutePath());
                     result.add(f);
 
                 }
@@ -227,7 +227,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                     } else {
                         type = "Dir";
                     }
-                    MyFileType f = new MyFileType(file.getName(), type, file.length(), name);
+                    MyFileType f = new MyFileType(file.getName(), type, file.length(), name, file.getAbsolutePath());
                     result.add(f);
 
                 }
@@ -402,13 +402,13 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      * @throws IOException
      */
     @Override
-    public boolean startFileServer(int port, String path) throws IOException {
+    public boolean startFileServer(int port, String path, long size) throws IOException {
         if (thread == null) {
-            thread = new FileServerThread(port, path);
+            thread = new FileServerThread(port, path, size);
             thread.start();
 
         }
-        thread.setPath(path);
+        thread.setPath(path, size);
 
         return true;
     }
@@ -428,7 +428,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         File f = new File(path);
         if (!(f.isDirectory())) {
             fc = new FileClient(port, ip);
-            fc.send(path, false);
+            fc.send(path, false, f.length());
             return true;
         }
         return false;

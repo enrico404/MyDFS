@@ -29,11 +29,11 @@ public interface ServerInterface extends Remote {
     long getFreeSpace() throws RemoteException;
     long getCapacity() throws RemoteException;
     String getIp() throws RemoteException, SocketException;
-    boolean startFileServer(int port, String path) throws RemoteException, IOException;
     boolean startFileClient(int port, String ip, String path) throws IOException;
     boolean mkdir(String path) throws RemoteException;
     boolean isDirectory(String path) throws RemoteException;
     File[] listFiles(String path) throws RemoteException;
     boolean move(String path1, String path2) throws IOException;
+    boolean startFileServer(int port, String path, long size) throws IOException;
 
 }

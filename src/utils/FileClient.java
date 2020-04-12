@@ -43,9 +43,11 @@ public class FileClient {
      * carico sulla CPU
      *
      * @param filePath percorso sorgente del file da inviare
+     * @param verbose flag che indica alla classe se essere verbosa o meno
+     * @param size dimensione del file da mandare
      * @throws IOException
      */
-    public void send(String filePath, boolean verbose) {
+    public void send(String filePath, boolean verbose, long size) {
         FileChannel inChannel = null;
         try {
             Path path = Paths.get(filePath);
@@ -70,7 +72,8 @@ public class FileClient {
                     //  buffer.clear();
 
                     if (elapsedTime > 0 && System.currentTimeMillis() % 100 == 0) {
-                        System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S");
+                        System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S\t | " +
+                                "Scaricati: "+Converter.byte_to_humanS(total)+" / "+ Converter.byte_to_humanS(size));
                     }
                 }
             }
