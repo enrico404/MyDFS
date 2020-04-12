@@ -24,7 +24,7 @@ public interface ServerManagerInterface extends Remote {
     boolean checkExists(String s) throws RemoteException;
     boolean rm_func(String path) throws RemoteException;
     boolean rm_func_rec(String path) throws RemoteException;
-    boolean cp_func() throws RemoteException;
+    boolean cp_func(String localPath, String remotePath) throws IOException;
     ServerInterface getSlaveNode(int index) throws RemoteException;
     ServerInterface getSlaveNode(String name) throws RemoteException;
     int freerNodeChooser() throws RemoteException;
@@ -35,4 +35,6 @@ public interface ServerManagerInterface extends Remote {
     long getFreeSpace() throws RemoteException;
     long getClusterCapacity() throws RemoteException;
     String getFileType(String path) throws RemoteException;
+    void recursiveCopyInt(String clientPath, String serverPath) throws IOException, RemoteException;
+    MyFileType getFile(String path) throws RemoteException;
 }

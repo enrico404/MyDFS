@@ -13,7 +13,7 @@ public class Helper {
     /**
      * Costruttore di default della classe
      */
-    public Helper(){
+    public Helper() {
         super();
     }
 
@@ -21,6 +21,7 @@ public class Helper {
      * Metodo principale della classe, per ogni comando è presente un manuale in formato .txt, i vari manuali si trovano
      * nella directory "manualDoc" . Il nome dei manuali deve corrispondere esattamente al nome del comando. Es. comando
      * ls - ls.txt . Il metodo va semplicemente a stampare il contenuto del file
+     *
      * @param cmdName
      * @throws IOException
      */
@@ -50,16 +51,19 @@ public class Helper {
 //            System.out.println("Uso:");
 //            System.out.println("cp -rm <remote_file_path> <local_path>");
 //        }
+        try {
+            BufferedReader in = new BufferedReader(new FileReader("../manualDoc/" + cmdName + ".txt"));
 
-        BufferedReader in = new BufferedReader(new FileReader("../manualDoc/"+cmdName+".txt"));
-
-        String line;
-        System.out.println("");
-        while((line=in.readLine())!=null){
-            System.out.println(line);
+            String line;
+            System.out.println("");
+            while ((line = in.readLine()) != null) {
+                System.out.println(line);
+            }
+            System.out.println("");
+            in.close();
+        }catch (FileNotFoundException e){
+            utils.error_printer("Il comando digitato non esiste!");
         }
-        System.out.println("");
-        in.close();
     }
 
 }

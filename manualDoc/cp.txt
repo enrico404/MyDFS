@@ -1,13 +1,17 @@
 Copia file locali nel filesystem distribuito e viceversa
 
 Uso:
-	cp [-rm, -r] <path_to_file>...  <file_system_path>
+	cp [-m, -r, -i]... <path_to_file>...  <file_system_path>
 
 Opzioni:
-	-rm -> copia un file da filesystem distribuito a locale
+	-m -> copia un file da filesystem distribuito a locale
 	-r -> per la copia ricorsiva di directory
+	-i -> per la gestione di copie interne
 
-Uso:
-	cp -rm <remote_file_path>... <local_path>
+Esempio d'uso:
+	cp -m <remote_file_path>... <local_path>
 	cp -r <path_to_dir>... <file_system_path>
-	cp -r -rm <remote_dir_path> <local_path>
+	cp -r -m <remote_dir_path> <local_path>
+	cp -i <internal_path_source> <internal_path_dest>
+	cp -rm <internal_dir> <absolute_path_to_client>
+    cp -ir <path_to_dir> <new_dir_path>

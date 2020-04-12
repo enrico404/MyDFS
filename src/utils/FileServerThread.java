@@ -4,16 +4,35 @@ import Server.ServerInterface;
 
 import java.awt.image.ColorConvertOp;
 import java.io.IOException;
+import java.security.SignatureException;
 
 /**
  * Classe di supporto per il file transfer system, estende la classe Thread. Al posto di istanziare un FileServer si istanzierà
  * un thread di questa classe, in questo modo si potranno gestire trasferimenti multipli di file da più client
  */
 public class FileServerThread extends Thread{
-    int port;
-    String path;
-    FileServer fs;
-    boolean verbose = true;
+    /**
+     * porta utilizzata per il trasferimento del file
+     */
+    private int port;
+    /**
+     * percorso del nuovo file trasferito
+     */
+    private String path;
+    /**
+     * riferimento al fileServer che si occupa del trasferimento di file
+     */
+    private FileServer fs;
+    /**
+     * flag che indica alla classe se essere verbose o meno
+     */
+    private boolean verbose = true;
+
+    /**
+     * Dimensione del file che verrà trasferito
+     */
+    private long size;
+
 
     /**
      * Costruttore con parametri della classe
@@ -22,9 +41,10 @@ public class FileServerThread extends Thread{
      *             trasferimento
      * @throws IOException
      */
-    public FileServerThread(int Port, String Path) throws IOException {
+    public FileServerThread(int Port, String Path, long Size) throws IOException {
         port = Port;
         path = Path;
+        size = Size;
         fs =  new FileServer(verbose);
     }
 
@@ -36,10 +56,11 @@ public class FileServerThread extends Thread{
      * @param Verbose flag che indica alla classe se essere verbose o meno
      * @throws IOException
      */
-    public FileServerThread(int Port, String Path, boolean Verbose) throws IOException {
+    public FileServerThread(int Port, String Path, boolean Verbose, long Size) throws IOException {
         port = Port;
         path = Path;
         verbose = Verbose;
+        size = Size;
         fs = new FileServer(verbose);
 
     }
@@ -50,9 +71,11 @@ public class FileServerThread extends Thread{
      * @param Path percorso del file di destinazione
      *
      */
-    public void setPath(String Path){
+    public void setPath(String Path, long Size){
         path = Path;
-        fs.setPath(path);
+        size = Size;
+        fs.setPath(path,size);
+
     }
 
     /**
@@ -68,7 +91,7 @@ public class FileServerThread extends Thread{
      */
     public void run(){
         try {
-            fs.bind(port, path);
+            fs.bind(port, path, size);
             fs.start();
         } catch (IOException e) {
             e.printStackTrace();

@@ -18,6 +18,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
 import utils.FileClient;
 import utils.FileServerThread;
 import utils.ConsoleColors;
@@ -31,19 +32,34 @@ import utils.ConsoleColors;
  *     <li>Copia di file da client a data node</li>
  *     <li>Copia di file da data node a client</li>
  * </ul>
- *
+ * <p>
  * Maggiori informazioni nelle classi rispettive
+ *
  * @see FileClient
  * @see FileServerThread
  */
 public class ServerClass extends UnicastRemoteObject implements ServerInterface {
+    /**
+     * Attributo contenente il nome del server
+     */
     private String name = "";
+    /**
+     * directory condivisa con gli altri server, deve essere la stessa per tutti i server
+     */
     private String sharedDir = "";
-    private FileServerThread thread=null;
-    private FileClient fc = null ;
+    /**
+     * riferimento al FileServer, serve per ricevere i file
+     */
+    private FileServerThread thread = null;
+    /**
+     * riferimento al FileClient, serve per mandare i file
+     */
+    private FileClient fc = null;
+
 
     /**
      * Costruttore di default, va semplicemente a settare il nome del data node
+     *
      * @param Name nome del nodo
      * @throws RemoteException
      */
@@ -54,6 +70,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
     /**
      * Getter dell'attributo name
+     *
      * @return stringa contenente il nome del nodo
      */
     public String getName() {
@@ -62,14 +79,16 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
     /**
      * Getter del path alla directory condivisa
+     *
      * @return stringa contenente il path alla directory condivisa del nodo
      */
-    public String getSharedDir(){
+    public String getSharedDir() {
         return sharedDir;
     }
 
     /**
      * Getter dell'indirizzo ip del nodo
+     *
      * @return Stringa contenente l'indirizzo ip del nodo in formato IpV4
      * @throws RemoteException
      * @throws SocketException
@@ -82,6 +101,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     /**
      * Metodo per controlare l'esistenza di un file/directory all'interno del nodo, è utilizzato in diverse funzioni come
      * mv e cp
+     *
      * @param path percorso al file/directory da controllare
      * @return true se il file/directory esiste, false altrimenti
      * @throws RemoteException
@@ -90,7 +110,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public boolean checkExists(String path) throws RemoteException {
         File tmpDir = new File(path);
         boolean exists = tmpDir.exists();
-        if(exists) {
+        if (exists) {
             return true;
 
         }
@@ -99,12 +119,13 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
     /**
      * Metodo helper per controllare se un file è una directory o meno
+     *
      * @param path percorso al file/directory
      * @return true se il file è una directory, false altrimenti
      * @throws RemoteException
      */
     @Override
-    public boolean isDirectory(String path) throws RemoteException{
+    public boolean isDirectory(String path) throws RemoteException {
         File f = new File(path);
         if (f.isDirectory()) return true;
         return false;
@@ -113,45 +134,44 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
     /**
      * Metodo che ritorna una lista di file se il percorso passato come parametro è una directory
+     *
      * @param path percorso alla directory (relativo/assoluto)
      * @return la lista di file se è una directory il percorso dato in input, null altrimenti
      * @throws RemoteException
      */
     @Override
-    public File[] listFiles(String path) throws RemoteException{
+    public File[] listFiles(String path) throws RemoteException {
         File f = new File(path);
-        if(f.isDirectory()) return f.listFiles();
+        if (f.isDirectory()) return f.listFiles();
         return null;
     }
 
     /**
-     * @deprecated
      * @param path percorso in cui si vuole eseguire il comando
      * @return lista di file presenti in quel percorso
      * @throws RemoteException
+     * @deprecated
      */
     @Override
     @Deprecated
     public ArrayList<MyFileType> ls_func(String path) throws RemoteException {
         ArrayList<MyFileType> result = new ArrayList<MyFileType>();
-        if(sharedDir != null) {
+        if (sharedDir != null) {
 
             File[] files = new File(path).listFiles();
 
             for (File file : files) {
                 String type;
-                if(file.isFile()){
+                if (file.isFile()) {
                     type = "File";
-                }
-                else {
+                } else {
                     type = "Dir";
                 }
-                MyFileType f = new MyFileType(file.getName(), type, file.length(), name);
+                MyFileType f = new MyFileType(file.getName(), type, file.length(), name, file.getAbsolutePath());
                 result.add(f);
 
             }
-        }
-        else {
+        } else {
             utils.error_printer("Errore nella condivisione della directory");
         }
         return result;
@@ -161,8 +181,8 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      * Metodo ls relativo al data node, va a restituire una lista di file con associato anche il tipo e la dimensione.
      * Viene utilizzato il tipo "MyFileType" poichè c'erano dei problemi nel passare una lista di file normale, il descrittore
      * dei file passato non è completo per un qualche motivo o si perdevano informazioni.
-     * @param path percorso in cui si vuole eseguire il comando
-     * @return lista di file presenti in quel percorso
+     *
+     * @param path        percorso in cui si vuole eseguire il comando
      * @param dirCapacity parametro booleano che dice se calcolare la dimensione delle directory opppure no, solitamente
      *                    non coviene calcolarlo per questioni di efficienza
      * @return
@@ -171,7 +191,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     @Override
     public ArrayList<MyFileType> ls_func(String path, boolean dirCapacity) throws RemoteException {
         ArrayList<MyFileType> result = new ArrayList<MyFileType>();
-        if(dirCapacity) {
+        if (dirCapacity) {
             if (sharedDir != null) {
 
                 File[] files = new File(path).listFiles();
@@ -186,7 +206,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                         type = "Dir";
                         size = getDirSize(file);
                     }
-                    MyFileType f = new MyFileType(file.getName(), type, size, name);
+                    MyFileType f = new MyFileType(file.getName(), type, size, name, file.getAbsolutePath());
                     result.add(f);
 
                 }
@@ -194,26 +214,24 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                 utils.error_printer("Errore nella condivisione della directory");
 
             }
-        }else {
+        } else {
 
-            if(sharedDir != null) {
+            if (sharedDir != null) {
 
                 File[] files = new File(path).listFiles();
 
                 for (File file : files) {
                     String type;
-                    if(file.isFile()){
+                    if (file.isFile()) {
                         type = "File";
-                    }
-                    else {
+                    } else {
                         type = "Dir";
                     }
-                    MyFileType f = new MyFileType(file.getName(), type, file.length(), name);
+                    MyFileType f = new MyFileType(file.getName(), type, file.length(), name, file.getAbsolutePath());
                     result.add(f);
 
                 }
-            }
-            else {
+            } else {
                 utils.error_printer("Errore nella condivisione della directory");
             }
 
@@ -224,22 +242,22 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     /**
      * Metodo interno ricorsivo per andare a calcolare la dimensione effettiva di una directory, utilizzarlo con attenzione,
      * se le directory presentano un numero molto elevato di file potrebbe avere problemi di performance
+     *
      * @param f riferimento alla directory
      * @return dimensione della directory in formato long
      */
-    private long getDirSize(File f){
+    private long getDirSize(File f) {
         long size = 0;
-        if(f.isDirectory()){
-            for(File file: f.listFiles()){
-                if(file.isDirectory()){
+        if (f.isDirectory()) {
+            for (File file : f.listFiles()) {
+                if (file.isDirectory()) {
                     size += getDirSize(file);
-                }else{
+                } else {
                     size += file.length();
                 }
 
             }
-        }
-        else {
+        } else {
             size += f.length();
         }
         return size;
@@ -249,6 +267,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     /**
      * Metodo rm parte del data node, si va ad eliminare effettivamente il file se questo esiste all'interno di questo
      * nodo.
+     *
      * @param path stringa contenente il percorso assoluto al file
      * @return true in caso di successo, false altrimenti
      * @throws RemoteException
@@ -257,26 +276,26 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public boolean rm_func(String path) throws RemoteException {
         File f = new File(path);
         //se il file esiste
-        if(f.exists()){
-            if(f.delete()){
-                System.out.println("file "+path+" eliminato con successo");
+        if (f.exists()) {
+            if (f.delete()) {
+                System.out.println("file " + path + " eliminato con successo");
                 return true;
             }
 
-        }
-        else {
-            utils.error_printer("Il file "+path+" non esiste!");
+        } else {
+            utils.error_printer("Il file " + path + " non esiste!");
         }
         return false;
     }
 
     /**
      * Metodo interno per la cancellazione ricorsiva di directory
+     *
      * @param f
      */
-    private void recursiveDelete(File f){
-        if(f.isDirectory()){
-            for (File sub: f.listFiles()){
+    private void recursiveDelete(File f) {
+        if (f.isDirectory()) {
+            for (File sub : f.listFiles()) {
                 recursiveDelete(sub);
             }
         }
@@ -285,7 +304,8 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
     /**
      * Seconda parte del metodo per la cancellazione ricorsiva di directory lato data node, va semplicemente a controllare
-     *  se il file che si sta cancellando esiste prima iniziare con la ricorsione
+     * se il file che si sta cancellando esiste prima iniziare con la ricorsione
+     *
      * @param path percorso alla directory
      * @return true in caso di cancellazione senza errori, false altrimenti
      * @throws RemoteException
@@ -294,9 +314,9 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public boolean rm_func_rec(String path) throws RemoteException {
         File f = new File(path);
         //se il file esiste
-        if(f.exists()){
+        if (f.exists()) {
             recursiveDelete(f);
-            System.out.println(path+" eliminato con successo!");
+            System.out.println(path + " eliminato con successo!");
             return true;
         }
         return false;
@@ -306,6 +326,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      * Metodo mv lato data node, si basa sul metodo renameTo della classe File, infatti per come è organizzato il file-system
      * di linux non è necessario effettura nessuno spostamento fisico del file, ma basta cambiargli il campo corretto nell'header
      * del file
+     *
      * @param path1 percorso al file/directory
      * @param path2 nuovo percorso
      * @return true in caso di successo, false altrimenti
@@ -319,6 +340,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
     /**
      * Metodo lato data node per ottenere lo spazio disponibile nel nodo
+     *
      * @return spazio disponibile utilizzabile in formato long
      * @throws RemoteException
      */
@@ -326,7 +348,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public long getFreeSpace() throws RemoteException {
         File f = new File(sharedDir);
         long freeSpace = f.getUsableSpace();
-        System.out.println("Spazio libero sul nodo : "+name+" "+ freeSpace);
+        System.out.println("Spazio libero sul nodo : " + name + " " + freeSpace);
         return freeSpace;
     }
 
@@ -338,7 +360,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      * @throws RemoteException
      */
     @Override
-    public long getCapacity() throws RemoteException{
+    public long getCapacity() throws RemoteException {
         File f = new File(sharedDir);
         long capacity = f.getTotalSpace();
         return capacity;
@@ -347,6 +369,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     /**
      * Metodo per l'apertura di un file, deve essere ancora implementato, l'idea è quella di effettuare una copia temporanea
      * del file in locale e poi aprirlo con gli strumenti di default che offre la macchina
+     *
      * @return
      * @throws RemoteException
      */
@@ -357,6 +380,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
     /**
      * Metodo per selezionare la directory condivisa del data node
+     *
      * @param path percorso alla directory condivisa
      * @return true in caso di successo
      * @throws RemoteException
@@ -365,34 +389,36 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public boolean selShared_dir(String path) throws RemoteException {
         sharedDir = path;
         System.out.println("Direcotory condivisa settata con successo!");
-        System.out.println("Percorso: "+ sharedDir);
+        System.out.println("Percorso: " + sharedDir);
         return true;
     }
 
     /**
      * Metodo che fa partire il server's thread relativo al sistema di file transfer
+     *
      * @param port numero di porta nel quale aprire il socket tcp per il trasferimento di file
      * @param path percorso in cui verrà scritto il nuovo file
      * @return true in caso di successo
      * @throws IOException
      */
     @Override
-    public boolean startFileServer(int port, String path) throws IOException {
-        if(thread == null){
-            thread = new FileServerThread(port, path);
+    public boolean startFileServer(int port, String path, long size) throws IOException {
+        if (thread == null) {
+            thread = new FileServerThread(port, path, size);
             thread.start();
 
         }
-        thread.setPath(path);
+        thread.setPath(path, size);
 
         return true;
     }
 
     /**
      * Metodo per l'invio di file verso altri data node oppure verso altri client
+     *
      * @param port numero di porta in cui aprire la connessione tcp per l'invio del file
-     * @param ip ip in formato IpV4 a cui mandare il file, è necessario che questo sia all'interno della stessa rete locale
-     *           e raggiungibile
+     * @param ip   ip in formato IpV4 a cui mandare il file, è necessario che questo sia all'interno della stessa rete locale
+     *             e raggiungibile
      * @param path percorso del file da inviare
      * @return true in caso di successo, false altrimenti
      * @throws IOException
@@ -400,9 +426,9 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     @Override
     public boolean startFileClient(int port, String ip, String path) throws IOException {
         File f = new File(path);
-        if(!(f.isDirectory())) {
+        if (!(f.isDirectory())) {
             fc = new FileClient(port, ip);
-            fc.send(path);
+            fc.send(path, false, f.length());
             return true;
         }
         return false;
@@ -410,19 +436,21 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
     /**
      * Metodo per la creazione di una directory nel nodo, ci si basa sul metodo offerto dalla classe File
+     *
      * @param path percorso della nuova directory
      * @return true in caso di successo, false altrimenti
      * @throws RemoteException
      */
     @Override
-    public boolean mkdir(String path) throws RemoteException{
+    public boolean mkdir(String path) throws RemoteException {
         File f = new File(path);
-        if(f.mkdir()) return true;
-        return  false;
+        if (f.mkdir()) return true;
+        return false;
     }
 
     /**
      * Main della classe
+     *
      * @param args
      * @throws RemoteException
      */
@@ -431,14 +459,16 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
             System.setSecurityManager(new SecurityManager());
         }
 
-        try{
+        try {
             List<Inet4Address> ips = utils.getInet4Addresses();
-            if(ips.size() >= 1 ) {
+            if (ips.size() >= 1) {
                 String myIp = ips.get(0).toString().substring(1);
                 System.setProperty("java.rmi.server.hostname", myIp);
                 System.out.println("Inserisci il nome del server: ");
                 Scanner in = new Scanner(System.in);
                 String name = in.nextLine();
+
+               // String name = utils.getMacAddresses();
                 ServerClass ser = new ServerClass(name);
                 Naming.rebind("//" + myIp + "/" + name, ser);
                 System.out.println();
@@ -451,10 +481,10 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 //                System.out.println("Name: "+f.getName());
 //                System.out.println("Size: "+ f.getSize());
 //            }
-            }else {
+            } else {
                 utils.error_printer("Non sei connesso ad una rete locale");
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

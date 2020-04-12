@@ -1,7 +1,7 @@
 Resistituisce i file nella directory corrente
 
 Uso:
-	ls [-l, -d, -h]
+	ls [-l, -d, -h]..
 
 Opzioni:
 	-l -> per vedere anche i meta dati dei file
@@ -13,3 +13,5 @@ Esempi d'uso:
     ls -d
     ls -l -d
     ls -l -d -h
+    ls -ldh
+    ls -lh

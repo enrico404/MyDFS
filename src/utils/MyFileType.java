@@ -6,10 +6,27 @@ import java.io.Serializable;
  * Classe personalizzata per la gestione dei file all'interno del file system distribuito
  */
 public class MyFileType implements Serializable {
+    /**
+     * nome del file
+     */
     private String name;
+    /**
+     * tipo del file (File/Dir)
+     */
     private String type;
+    /**
+     * dimensione in byte del file
+     */
     private long size;
+    /**
+     * locazione fisica del file, contiene il nome del data nodes in cui si trova
+     */
     private String location;
+
+    /**
+     * Percorso assoluto al file
+     */
+    private String path;
 
     /**
      * Costruttore con parametri della classe
@@ -18,11 +35,12 @@ public class MyFileType implements Serializable {
      * @param Size dimensione in bytes del file
      * @param Location percorso del file
      */
-    public MyFileType(String Name, String Type, long Size, String Location){
+    public MyFileType(String Name, String Type, long Size, String Location, String Path){
         name = Name;
         type = Type;
         size = Size;
         location = Location;
+        path = Path;
     }
     public String getName() {
         return name;
@@ -82,6 +100,14 @@ public class MyFileType implements Serializable {
      */
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    /**
+     * Getter dell'attributo path
+     * @return stringa contenente il percorso assoluto al file
+     */
+    public String getPath(){
+        return path;
     }
 
 

@@ -33,6 +33,25 @@ public class utils {
     }
 
     /**
+     * Metodo per ottenere l'indirizzo MAC della macchina
+     * @return stringa contenente il mac address
+     * @throws SocketException
+     */
+    public static String getMacAddresses() throws SocketException {
+        StringBuilder sb = new StringBuilder();
+        Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+        for (NetworkInterface netIn : Collections.list(nets)) {
+            byte[] mac = netIn.getHardwareAddress();
+            if (mac != null) {
+                for (int i = 0; i < mac.length; i++) {
+                    sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
      * Metodo per controllare se un array contiene una determinata stringa
      * @param array array di stringhe in input
      * @param val Stringa da cercare nell'array
@@ -86,6 +105,10 @@ public class utils {
             return cleanedStr;
         }
 
+        if(cleanedStr.equals("..")){
+            cleanedStr =  pathWithoutLast(client.getCurrentPath());
+        }
+
         if(cleanedStr.startsWith("./")){
             cleanedStr = cleanedStr.substring(1, cleanedStr.length());
             cleanedStr = client.getCurrentPath()+cleanedStr;
@@ -106,6 +129,23 @@ public class utils {
      */
     public static void error_printer(String error){
         System.err.println(ConsoleColors.RED+error+ConsoleColors.RESET);
+    }
+
+
+    /**
+     * Metodo per ottenere il percorso senza l'ultimo file/directory
+     * @param fullPath percorso completo
+     * @return nuovo percorso
+     */
+    public static String pathWithoutLast(String fullPath){
+        String[] list = fullPath.split("/");
+        String newPath = "";
+
+        for(int i=0; i<list.length-1; i++){
+            newPath += list[i]+"/";
+        }
+        return newPath;
+
     }
 
 //    public static String relative_to_absolute(String path, String currentPath){
