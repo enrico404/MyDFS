@@ -82,8 +82,22 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      *
      * @return stringa contenente il path alla directory condivisa del nodo
      */
-    public String getSharedDir() {
+    public String getSharedDir() throws RemoteException{
         return sharedDir;
+    }
+
+    /**
+     * Setter del path alla directory condivisa
+     *
+     * @param path percorso alla directory condivisa
+     * @return true in caso di successo
+     * @throws RemoteException
+     */
+    @Override
+    public void setSharedDir(String path) throws RemoteException {
+        sharedDir = path;
+        System.out.println("Direcotory condivisa settata con successo!");
+        System.out.println("Percorso: " + sharedDir);
     }
 
     /**
@@ -378,20 +392,6 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         return false;
     }
 
-    /**
-     * Metodo per selezionare la directory condivisa del data node
-     *
-     * @param path percorso alla directory condivisa
-     * @return true in caso di successo
-     * @throws RemoteException
-     */
-    @Override
-    public boolean selShared_dir(String path) throws RemoteException {
-        sharedDir = path;
-        System.out.println("Direcotory condivisa settata con successo!");
-        System.out.println("Percorso: " + sharedDir);
-        return true;
-    }
 
     /**
      * Metodo che fa partire il server's thread relativo al sistema di file transfer
@@ -474,7 +474,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                 System.out.println();
                 System.out.println(name + " bindato nel registry");
                 System.out.println("Indirizzo ip bindato: " + myIp);
-                ser.selShared_dir(System.getProperty("user.home") + "/shDir");
+                ser.setSharedDir(args[0]);
 
 //            ArrayList<MyFileType> res = ser.ls_func(ser.getSharedDir(), true);
 //            for(MyFileType f:res){

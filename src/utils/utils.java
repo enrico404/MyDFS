@@ -85,7 +85,10 @@ public class utils {
      */
     public static String getFileName(String path){
         String[] splittedPath = path.split("/");
-        return splittedPath[splittedPath.length-1];
+        if(splittedPath.length>0)
+            return splittedPath[splittedPath.length-1];
+        else
+            return "";
     }
 
     /**
@@ -139,12 +142,15 @@ public class utils {
      */
     public static String pathWithoutLast(String fullPath){
         String[] list = fullPath.split("/");
-        String newPath = "";
+        if(list.length>0) {
+            String newPath = "";
 
-        for(int i=0; i<list.length-1; i++){
-            newPath += list[i]+"/";
-        }
-        return newPath;
+            for (int i = 0; i < list.length - 1; i++) {
+                newPath += list[i] + "/";
+            }
+            return newPath;
+        }else
+            return "";
 
     }
 

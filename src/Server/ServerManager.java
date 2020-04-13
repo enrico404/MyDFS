@@ -199,14 +199,15 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     @Override
     public ArrayList<MyFileType> ls_func(String path) throws RemoteException {
+        String realPath;
         ArrayList<MyFileType> totFiles = new ArrayList<MyFileType>();
         for (ServerInterface slave : slaveServers) {
             //se esiste la cartella nello slave devo scrivere i suoi file
-
-            if (slave.checkExists(path)) {
+            realPath = slave.getSharedDir()+path;
+            if (slave.checkExists(realPath)) {
                 //System.out.println("Scrivo file dello slave: "+ slave.getName());
                 ArrayList<MyFileType> tmpList = new ArrayList<MyFileType>();
-                tmpList = slave.ls_func(path, false);
+                tmpList = slave.ls_func(realPath, false);
                 for (MyFileType f : tmpList) {
                     if (!(contains(totFiles, f.getName())))
                         totFiles.add(f);
@@ -227,13 +228,13 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     @Override
     public ArrayList<MyFileType> ls_func(String path, boolean dirCapacity) throws RemoteException {
-
+        String realPath;
         ArrayList<MyFileType> totFiles = new ArrayList<MyFileType>();
-
         for (ServerInterface slave : slaveServers) {
+            realPath = slave.getSharedDir()+path;
             //se esiste la cartella nello slave devo scrivere i suoi file
-            if (slave.checkExists(path)) {
-                for (MyFileType f : slave.ls_func(path, dirCapacity)) {
+            if (slave.checkExists(realPath)) {
+                for (MyFileType f : slave.ls_func(realPath, dirCapacity)) {
                     if (!(contains(totFiles, f))) {
                         totFiles.add(f);
                     } else {
@@ -282,7 +283,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * Metodo get per lìattributo sharedDIr
      *
      * @return valore dell'attributo sharedDir
+     * @deprecated
      */
+    @Deprecated
     @Override
     public String getSharedDir() {
         return sharedDir;
@@ -293,8 +296,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      *
      * @param path percorso della directory condivisa (il percorso deve essere comune per tutti i nodi slave)
      * @return true se il percorso viene settato con successo
+     * @deprecated
      * @throws RemoteException
      */
+    @Deprecated
     @Override
     public boolean selShared_dir(String path) throws RemoteException {
         sharedDir = path;
@@ -313,8 +318,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     @Override
     public boolean checkExists(String path) throws RemoteException {
         for (ServerInterface slave : slaveServers) {
+            String realPath = slave.getSharedDir()+path;
             //se esiste la cartella nello slave mi ci posso spostare dentro
-            if (slave.checkExists(path)) return true;
+            if (slave.checkExists(realPath)) return true;
         }
         return false;
     }
@@ -332,9 +338,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     @Override
     public boolean rm_func(String path) throws RemoteException {
         for (ServerInterface slave : slaveServers) {
+            String realPath = slave.getSharedDir()+path;
             //se esiste il file nello slave, il file è supposto univoco
-            if (slave.checkExists(path)) {
-                if (slave.rm_func(path))
+            if (slave.checkExists(realPath)) {
+                if (slave.rm_func(realPath))
                     return true;
             }
 
@@ -354,9 +361,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     public boolean rm_func_rec(String path) throws RemoteException {
         boolean err_canc = false;
         for (ServerInterface slave : slaveServers) {
+            String realPath = slave.getSharedDir()+path;
             //se esiste il file nello slave, il file è supposto univoco
-            if (slave.checkExists(path)) {
-                if (!(slave.rm_func_rec(path)))
+            if (slave.checkExists(realPath)) {
+                if (!(slave.rm_func_rec(realPath)))
                     err_canc = true;
             }
 
@@ -388,13 +396,14 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
             //se è un trasferimento di file interno al file system remoto
             if (checkExists(localPath)) {
-                slave.startFileServer(port, remotePath, getFile(localPath).getSize());
+                String realRemotePath = slave.getSharedDir()+remotePath;
+                slave.startFileServer(port, realRemotePath, getFile(localPath).getSize());
                 // System.out.println("localpath: "+localPath);
                 String loc = getFileLocation(localPath);
                 //System.out.println("locazione: "+loc);
                 ServerInterface ClSlave = getSlaveNode(loc);
-
-                ClSlave.startFileClient(port, slave.getIp(), localPath);
+                String realLocalPath = ClSlave.getSharedDir()+localPath;
+                ClSlave.startFileClient(port, slave.getIp(), realLocalPath);
                 return true;
 
             }
@@ -413,14 +422,15 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     @Override
     public void recursiveCopyInt(String clientPath, String serverPath) throws IOException {
         for (ServerInterface slave : getSlaveServers()) {
-
-            if (slave.isDirectory(clientPath) && slave.checkExists(clientPath)) {
+            String realClientPath = slave.getSharedDir()+clientPath;
+            if (slave.isDirectory(realClientPath) && slave.checkExists(realClientPath)) {
                 String[] param = new String[1];
                 param[0] = serverPath;
                 //System.out.println("Creo directory : "+serverPath);
                 //ser.mkdir(param, this.getCurrentPath());
-                slave.mkdir(serverPath);
-                for (File sub : slave.listFiles(clientPath)) {
+                String realServerPath = slave.getSharedDir()+serverPath;
+                slave.mkdir(realServerPath);
+                for (File sub : slave.listFiles(realClientPath)) {
                     String newClientPath = clientPath + '/' + sub.getName();
                     String newSerPath = serverPath + '/' + sub.getName();
                     recursiveCopyInt(newClientPath, newSerPath);
@@ -446,8 +456,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         String location = "";
         for (ServerInterface slave : slaveServers) {
             //se esiste la cartella nello slave devo scrivere i suoi file
-
-            if (slave.checkExists(path1)) {
+            String realPath = slave.getSharedDir()+path1;
+            if (slave.checkExists(realPath)) {
                 location = slave.getName();
             }
         }
@@ -517,13 +527,14 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     @Override
     public boolean move(String path1, String path2, String loc1) throws IOException, InterruptedException {
-
+        String realPath1, realPath2;
 
         MyFileType f1 = getFile(path1);
         MyFileType f2 = getFile(path2);
+
 //        System.out.println("path1: "+path1);
 //        System.out.println("path2: "+path2);
-//        System.out.println(f1.getType().equals("File")+" "+f2.getType().equals("Dir"));
+        //System.out.println(f1.getType()+ " " +f2.getType());
         if (f1.getType().equals("File") && f2.getType().equals("Dir")) {
             //si recupera il nodo slave e si cmabia il percorso dei file/directory
             // es : s1 -> s1
@@ -531,7 +542,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             path2 += "/" + fileName;
             if (path1 != path2) {
                 ServerInterface slave = getSlaveNode(loc1);
-                slave.move(path1, path2);
+                realPath1 = slave.getSharedDir()+path1;
+                realPath2 = slave.getSharedDir()+path2;
+                slave.move(realPath1, realPath2);
             }
 
         } else if (f1.getType().equals("Dir") && f2.getType().equals("Dir")) {
@@ -543,8 +556,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             //System.out.println("Inizio la copia ricorsiva di "+f1.getName());
             //recursiveCopy(f1, path1, path2);
             for (ServerInterface slave : slaveServers) {
+                realPath1 = slave.getSharedDir()+path1;
+                realPath2 = slave.getSharedDir()+path2;
                 if (path1 != path2) {
-                    slave.move(path1, path2);
+                    slave.move(realPath1, realPath2);
                 }
             }
 
@@ -615,6 +630,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     @Override
     public boolean mkdir(String[] param, String currentPath) throws RemoteException {
+        String realPath = "";
         for (int i = 1; i < param.length; i++) {
 
             if (param[i].startsWith("./")) {
@@ -631,15 +647,17 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
 //                String loc = getFileLocation(tmp);
 //                ServerInterface slave = getSlaveNode(loc);
-                for (ServerInterface slave : slaveServers)
-                    slave.mkdir(param[i]);
+                for (ServerInterface slave : slaveServers) {
+                    realPath = slave.getSharedDir()+param[i];
+                    slave.mkdir(realPath);
+                }
             } else {
                 //caso in cui scrivo solo il nome della cartella
-                int slaveIndex = freerNodeChooser();
-                //ServerInterface slave = getSlaveNode(slaveIndex);
-                for (ServerInterface slave : slaveServers)
-                    if (slave.checkExists(currentPath))
-                        slave.mkdir(currentPath + "/" + param[i]);
+                for (ServerInterface slave : slaveServers) {
+                    realPath = slave.getSharedDir()+currentPath;
+                    if (slave.checkExists(realPath))
+                        slave.mkdir(realPath + "/" + param[i]);
+                }
             }
         }
 
@@ -719,7 +737,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             }
         }
         //se non esiste ritorno file vuoto
-        return new MyFileType("", "", 0,"", "");
+        return new MyFileType("shDir", "Dir", 4096,"-", "-");
     }
 
     /**
@@ -750,7 +768,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 System.out.println();
                 System.out.println("ServerManager bindato nel registry");
                 System.out.println("Indirizzo ip bindato: " + myIp);
-                serM.selShared_dir(System.getProperty("user.home") + "/shDir"); //è la directory condivisa dei dataServer, deve essere uguale per tutti
+
+                //serM.selShared_dir(System.getProperty("user.home") + "/shDir");
                 //connetto il serverManger ai vari dataServer specificati
                 serM.connectToDataServers();
                 //serM.balance();

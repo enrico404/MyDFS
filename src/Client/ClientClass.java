@@ -64,7 +64,7 @@ public class ClientClass implements Serializable {
      */
     public ClientClass(ServerManagerInterface ser) throws RemoteException {
         super();
-        currentPath = ser.getSharedDir();
+        currentPath = "";
         basePath = currentPath;
 
     }
@@ -179,7 +179,7 @@ public class ClientClass implements Serializable {
      */
     public boolean cd_func(ServerManagerInterface ser, String path) throws RemoteException {
 
-        if (path.equals("..") && !(currentPath.equals(ser.getSharedDir()))) {
+        if (path.equals("..") && !(currentPath.equals(""))) {
             //torno indietro di una directory
             String dirs[] = currentPath.split("/");
             currentPath = "";
@@ -272,7 +272,8 @@ public class ClientClass implements Serializable {
             // recupero il reference al nodo slave
             ServerInterface slave = ser.getSlaveNode(slaveIndex);
             //System.out.println("nodo scelto: "+ slave.getName());
-            slave.startFileServer(port, remotePath, f.length());
+            String realRemotePath = slave.getSharedDir()+remotePath;
+            slave.startFileServer(port, realRemotePath, f.length());
 
             fc = new FileClient(port, slave.getIp());
             localPath = utils.cleanString(localPath, this);
@@ -356,8 +357,8 @@ public class ClientClass implements Serializable {
                     thread.start();
                 }
                 thread.setPath(path2,ser.getFile(path1).getSize());
-
-                slave.startFileClient(port2, getIp(), path1);
+                String realPath = slave.getSharedDir()+path1;
+                slave.startFileClient(port2, getIp(), realPath);
 
 
             } else {
@@ -383,8 +384,10 @@ public class ClientClass implements Serializable {
         if (f.isDirectory()) {
 //            int slaveIndex = ser.freerNodeChooser();
 //            ServerInterface slave = ser.getSlaveNode(slaveIndex);
+            String realRemotePath;
             for (ServerInterface slave : ser.getSlaveServers()) {
-                slave.mkdir(remotePath);
+                realRemotePath = slave.getSharedDir()+remotePath;
+                slave.mkdir(realRemotePath);
             }
             for (File sub : f.listFiles()) {
                 String localPathNew = localPath + '/' + sub.getName();
@@ -409,24 +412,27 @@ public class ClientClass implements Serializable {
      * @throws IOException
      */
     public void recursiveCopy_remote(String remotePath, String clientPath, ServerManagerInterface sm) throws IOException {
-        //System.out.println("RemotePath: "+ remotePath);
-        //System.out.println("Client path: "+clientPath);
+//        System.out.println("RemotePath: "+ remotePath);
+//        System.out.println("Client path: "+clientPath);
+
         for (ServerInterface slave : sm.getSlaveServers()) {
-            boolean flag = slave.isDirectory(remotePath);
+            String realRemote = slave.getSharedDir()+remotePath;
+            boolean flag = slave.isDirectory(realRemote);
             //System.out.println("Setto la dimensione di: "+sm.getFile(remotePath).getSize());
-            thread.setPath(clientPath, sm.getFile(remotePath).getSize());
+            thread.setPath(clientPath, sm.getFile(realRemote).getSize());
             if (flag) {
 
                 mkdir(clientPath);
-                for (File sub : slave.listFiles(remotePath)) {
+                for (File sub : slave.listFiles(realRemote)) {
                     String remotePathNew = remotePath + '/' + sub.getName();
                     String clientPathNew = clientPath + '/' + sub.getName();
                     recursiveCopy_remote(remotePathNew, clientPathNew, sm);
                 }
             } else {
                 //copia del singolo file
-                if (slave.checkExists(remotePath))
-                    slave.startFileClient(port2, getIp(), remotePath);
+                //System.out.println(realRemote);
+                if (slave.checkExists(realRemote))
+                    slave.startFileClient(port2, getIp(), realRemote);
             }
 
         }
@@ -446,6 +452,7 @@ public class ClientClass implements Serializable {
         System.out.println("");
         for (ServerInterface slave : ser.getSlaveServers()) {
             System.out.println("Name: " + slave.getName() + " |  ip: " + slave.getIp());
+            System.out.println("Directory condivisa: "+ slave.getSharedDir());
 
             if (ParamParser.checkParam(cmd, "-h")) {
                 String freeSpace_hS = Converter.byte_to_humanS(slave.getFreeSpace());
@@ -454,7 +461,8 @@ public class ClientClass implements Serializable {
                 //caso di default senza parametri
                 System.out.println(ConsoleColors.CYAN + "Spazio disponibile: " + slave.getFreeSpace() + ConsoleColors.RESET);
             }
-
+            System.out.println("-----------------------------------------------------");
+            System.out.println("");
         }
         System.out.println("");
     }
@@ -630,7 +638,10 @@ public class ClientClass implements Serializable {
                     try {
                         System.out.flush();
                         System.out.println("Inserisci comando...");
-                        System.out.println(ConsoleColors.CYAN + "Path: " + client.getCurrentPath() + ConsoleColors.RESET);
+                        if(client.getCurrentPath().equals(""))
+                            System.out.println(ConsoleColors.CYAN + "Path: /" + ConsoleColors.RESET);
+                        else
+                            System.out.println(ConsoleColors.CYAN + "Path: " + client.getCurrentPath() + ConsoleColors.RESET);
                         System.out.println("");
                         System.out.print('>');
                         Scanner in = new Scanner(System.in);
@@ -739,7 +750,7 @@ public class ClientClass implements Serializable {
                                     param[param.length - 1] = utils.cleanString(param[param.length - 1], client);
 
 
-                                    param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser);
+                                    param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser)+"/"+utils.getFileName(param[i]);
 
                                     //il controllo dell'esistenza del file è dentro la funzione, per tutti i casi
                                     if (!(client.cp_func(ser, param[i], param[param.length - 1], ins, true))) {
@@ -755,7 +766,7 @@ public class ClientClass implements Serializable {
 
                                 int startIndex = ParamParser.getParamNumbers(ins);
                                 param[startIndex] = utils.cleanString(param[startIndex], client);
-                                param[startIndex + 1] = utils.cleanString(param[startIndex + 1], client);
+                                param[startIndex + 1] = utils.cleanString(param[startIndex + 1], client)+"/"+utils.getFileName(param[startIndex]);
 
                                 if (!(param[startIndex].startsWith("/"))) {
                                     utils.error_printer("Devi specificare un path assoluto sul client!");
@@ -850,6 +861,8 @@ public class ClientClass implements Serializable {
                                 System.err.println("");
                                 exists = false;
                             }
+                            System.out.println(param[1]);
+                            System.out.println(param[2]);
                             if (exists)
                                 ser.move(param[1], param[2], loc1);
 

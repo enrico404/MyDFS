@@ -33,7 +33,13 @@ NB: il software è stato testato e sviluppato su Linux, l'esecuzione corretta su
 
 ## Installazione:
 
-1) nella cartella "installation" aprire un terminale ed eseguire "sudo ./serverSetup.sh"
+1) nella cartella "installation" aprire un terminale
+2) eseguire "./serverSetup.sh [installation_directory]"
+
+NB: se la cartella di installazione non viene specificata, il software viene installato di default nella directory
+/home/myDfsUser. I file del file-system distribuito vengono allocati all'interno della directory di installazione. Se per 
+esempio questa viene configurata in un disco secondario, lo spazio offerto dal nodo sarà pari allo spazio allocabile nel disco secondario.
+ 
 
 Questa procedura va ripetuta per ogni macchina che si vuole inserire nel file-system distribuito
 
