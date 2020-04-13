@@ -43,6 +43,11 @@ esempio questa viene configurata in un disco secondario, lo spazio offerto dal n
 
 Questa procedura va ripetuta per ogni macchina che si vuole inserire nel file-system distribuito
 
+Assicurarsi di avere i permessi corretti di accesso per il nuovo utente alla directory di installazione. 
+Nel caso di dischi secondari può essere necessario configurare correttamente le access control list.
+
+    -   sudo setfacl -m:myDfsUser:rwx /media/myuser/disk_label
+
 
 ## Procedura di reinstallazione
 

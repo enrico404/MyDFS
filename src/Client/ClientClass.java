@@ -326,14 +326,13 @@ public class ClientClass implements Serializable {
 
         } else if (ParamParser.checkParam(cmd, "-r")) {
             // caso copia ricorsiva directory (da locale a remoto)
-
             File f = new File(path1);
             if (f.exists() && f.isDirectory()) {
 
                 //System.out.println("Prova creazione directory su slave");
                 //slave.mkdir("/home/enrico404/shDir/dirCopy");
                 System.out.println("Inizio la copia ricorsiva di " + f.getName());
-
+                //System.out.println("path2: "+path2);
                 recursiveCopy(f, ser, path1, path2);
 
             } else {
@@ -381,12 +380,14 @@ public class ClientClass implements Serializable {
      * @throws InterruptedException
      */
     public void recursiveCopy(File f, ServerManagerInterface ser, String localPath, String remotePath) throws IOException, InterruptedException {
+        //System.out.println("REMOTE:"+remotePath);
         if (f.isDirectory()) {
 //            int slaveIndex = ser.freerNodeChooser();
 //            ServerInterface slave = ser.getSlaveNode(slaveIndex);
             String realRemotePath;
             for (ServerInterface slave : ser.getSlaveServers()) {
                 realRemotePath = slave.getSharedDir()+remotePath;
+                //System.out.println("real REM:"+realRemotePath);
                 slave.mkdir(realRemotePath);
             }
             for (File sub : f.listFiles()) {
@@ -395,7 +396,6 @@ public class ClientClass implements Serializable {
                 recursiveCopy(sub, ser, localPathNew, remotePathNew);
             }
         } else {
-
             cp_func(ser, localPath, remotePath);
         }
 
@@ -749,8 +749,10 @@ public class ClientClass implements Serializable {
                                     param[i] = utils.cleanString(param[i], client);
                                     param[param.length - 1] = utils.cleanString(param[param.length - 1], client);
 
-
-                                    param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser)+"/"+utils.getFileName(param[i]);
+                                    if(ParamParser.checkParam(ins, "-m"))
+                                        param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser)+"/"+utils.getFileName(param[i]);
+                                    else
+                                        param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser);
 
                                     //il controllo dell'esistenza del file è dentro la funzione, per tutti i casi
                                     if (!(client.cp_func(ser, param[i], param[param.length - 1], ins, true))) {
