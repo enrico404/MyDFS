@@ -1,7 +1,7 @@
 Modalità di sviluppo
 
 Per ogni nodo
-	1) crea una cartella nella tua home chiamata "shDir"
+	1) crea la directory condivisa
 
 Attenzione: il nome dell'utente deve essere lo stesso per tutti quanti i nodi
 
@@ -18,10 +18,10 @@ Server:
 	java -Djava.security.policy=./perm.policy Server/ServerClass <dir_condivisa>
 
 serverManager:
-	- avvia rmregistry se non è già stato avviato
+	- avvia rmregistry se non è già stato avviato nell'host
 	- apri un terminale in out ed esegui:
 
-	java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>
+	java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>...
 
 
 

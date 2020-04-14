@@ -823,8 +823,8 @@ public class ClientClass implements Serializable {
 
                                     System.out.println("Inizio la copia ricorsiva di " + param[i]);
 
-//                                System.out.println("source path: "+ param[i]);
-//                                System.out.println("Dest path: "+ param[param.length-1]);
+//                                    System.out.println("source path: "+ param[i]);
+//                                    System.out.println("Dest path: "+ param[param.length-1]);
 
                                     if (ser.checkExists(param[i])) {
                                         ser.recursiveCopyInt(param[i], param[param.length - 1]);

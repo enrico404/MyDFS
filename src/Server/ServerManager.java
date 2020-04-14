@@ -398,11 +398,11 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             if (checkExists(localPath)) {
                 String realRemotePath = slave.getSharedDir()+remotePath;
                 slave.startFileServer(port, realRemotePath, getFile(localPath).getSize());
-                // System.out.println("localpath: "+localPath);
                 String loc = getFileLocation(localPath);
                 //System.out.println("locazione: "+loc);
                 ServerInterface ClSlave = getSlaveNode(loc);
                 String realLocalPath = ClSlave.getSharedDir()+localPath;
+              //  System.out.println("localpath: "+realLocalPath+" remote: "+realRemotePath);
                 ClSlave.startFileClient(port, slave.getIp(), realLocalPath);
                 return true;
 
@@ -423,12 +423,15 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     public void recursiveCopyInt(String clientPath, String serverPath) throws IOException {
         for (ServerInterface slave : getSlaveServers()) {
             String realClientPath = slave.getSharedDir()+clientPath;
+            String realServerPath;
+//            System.out.println("real client path : "+realClientPath);
             if (slave.isDirectory(realClientPath) && slave.checkExists(realClientPath)) {
                 String[] param = new String[1];
                 param[0] = serverPath;
                 //System.out.println("Creo directory : "+serverPath);
                 //ser.mkdir(param, this.getCurrentPath());
-                String realServerPath = slave.getSharedDir()+serverPath;
+                realServerPath = slave.getSharedDir()+serverPath;
+//                System.out.println("Creo directory : "+realServerPath);
                 slave.mkdir(realServerPath);
                 for (File sub : slave.listFiles(realClientPath)) {
                     String newClientPath = clientPath + '/' + sub.getName();
@@ -436,7 +439,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     recursiveCopyInt(newClientPath, newSerPath);
                 }
             } else {
-                //System.out.println("copio: "+clientPath+" in: "+ serverPath);
+//                System.out.println("copio: "+clientPath+" in: "+ serverPath);
+                //i path vengono modificati all'interno di cp_func
                 cp_func(clientPath, serverPath);
             }
 

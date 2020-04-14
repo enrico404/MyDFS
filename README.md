@@ -114,3 +114,10 @@ Digitare il comando "help" per ottenere la lista di comandi che il software mett
 
 
 Digitando "help <nome_comando> si ottiene il manuale relativo a quel comando"
+
+
+# Sviluppo
+
+La modalità di sviluppo è accessibile seguendo le istruzioni presenti nel file [runninginstruction](./src/runningInstruction.txt).
+Utilizzando la modalità di sviluppo è possibile sviluppare e debuggare il software in maniera più fluida (non vengono utilizzati 
+gli script .sh per facilitare gli utenti casuali).
