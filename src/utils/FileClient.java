@@ -73,7 +73,7 @@ public class FileClient {
 
                     if (elapsedTime > 0 && System.currentTimeMillis() % 100 == 0) {
                         System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S\t | " +
-                                "Scaricati: "+Converter.byte_to_humanS(total)+" / "+ Converter.byte_to_humanS(size));
+                                "Inviati: "+Converter.byte_to_humanS(total)+" / "+ Converter.byte_to_humanS(size));
                     }
                 }
             }

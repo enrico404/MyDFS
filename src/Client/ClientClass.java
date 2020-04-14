@@ -342,10 +342,10 @@ public class ClientClass implements Serializable {
         } else if (ParamParser.checkParam(cmd, "-m")) {
             // caso remoto (solo file)
 
-
             // path1 è il path del file remoto e path2 è il path del file in locale
             String location = ser.getFileLocation(path1);
-            if (location != null) {
+           // System.out.println(location);
+            if (!location.equals("")) {
                 ServerInterface slave = ser.getSlaveNode(location);
                 //il client in questo caso diventa il server ricevitore di file (FileServer) e il server diventa il FileClient
                 if (thread == null) {
@@ -863,8 +863,8 @@ public class ClientClass implements Serializable {
                                 System.err.println("");
                                 exists = false;
                             }
-                            System.out.println(param[1]);
-                            System.out.println(param[2]);
+//                            System.out.println(param[1]);
+//                            System.out.println(param[2]);
                             if (exists)
                                 ser.move(param[1], param[2], loc1);
 
