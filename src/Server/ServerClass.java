@@ -408,7 +408,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
             thread.start();
 
         }
-        thread.setPath(path, size);
+        thread.setPath(path, size, false);
 
         return true;
     }

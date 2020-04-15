@@ -316,7 +316,7 @@ public class ClientClass implements Serializable {
                         thread = new FileServerThread(port2, path2, false, ser.getFile(path1).getSize());
                     thread.start();
                 }
-                thread.setPath(path2,ser.getFile(path1).getSize());
+                thread.setPath(path2,ser.getFile(path1).getSize(), true);
                 //recursiveCopy_remote(path1, path2, slave);
                 recursiveCopy_remote(path1, path2, ser);
             } else {
@@ -355,7 +355,7 @@ public class ClientClass implements Serializable {
                         thread = new FileServerThread(port2, path2, false,ser.getFile(path1).getSize());
                     thread.start();
                 }
-                thread.setPath(path2,ser.getFile(path1).getSize());
+                thread.setPath(path2,ser.getFile(path1).getSize(), true);
                 String realPath = slave.getSharedDir()+path1;
                 slave.startFileClient(port2, getIp(), realPath);
 
@@ -418,8 +418,8 @@ public class ClientClass implements Serializable {
         for (ServerInterface slave : sm.getSlaveServers()) {
             String realRemote = slave.getSharedDir()+remotePath;
             boolean flag = slave.isDirectory(realRemote);
-            //System.out.println("Setto la dimensione di: "+sm.getFile(remotePath).getSize());
-            thread.setPath(clientPath, sm.getFile(realRemote).getSize());
+            //System.out.println("Setto la dimensione di: "+sm.getFile(realRemote).getSize()+"\n realremote: "+realRemote+" remote: "+remotePath);
+            thread.setPath(clientPath, sm.getFile(remotePath).getSize(), true);
             if (flag) {
 
                 mkdir(clientPath);

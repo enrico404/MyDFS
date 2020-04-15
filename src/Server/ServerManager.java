@@ -727,6 +727,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         return true;
     }
 
+    /**
+     * Funzione che restituisce un riferimento al file, dato input il path (non reale al file, ma già processato dalla funzione cleanString)
+     * @param path percorso in formato /dir1/...
+     * @return riferimento al file
+     * @throws RemoteException
+     */
     @Override
     public MyFileType getFile(String path) throws RemoteException {
 

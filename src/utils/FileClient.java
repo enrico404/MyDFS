@@ -72,8 +72,8 @@ public class FileClient {
                     //  buffer.clear();
 
                     if (elapsedTime > 0 && System.currentTimeMillis() % 100 == 0) {
-                        System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S\t | " +
-                                "Inviati: "+Converter.byte_to_humanS(total)+" / "+ Converter.byte_to_humanS(size));
+                        System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S | " +
+                                "Inviati: "+Converter.byte_to_humanS(total)+" / "+ Converter.byte_to_humanS(size)+" | File: "+utils.getFileName(filePath));
                     }
                 }
             }
@@ -81,6 +81,7 @@ public class FileClient {
             if (verbose) {
                 System.out.println("");
                 System.out.println("Trasferimento di: \"" + utils.getFileName(filePath) + "\" completato in: " + elapsedTime / 1000 + " Secondi");
+
             }
 
             sock.close();

@@ -71,10 +71,12 @@ public class FileServerThread extends Thread{
      * @param Path percorso del file di destinazione
      *
      */
-    public void setPath(String Path, long Size){
+    public void setPath(String Path, long Size, boolean Verbose){
         path = Path;
         size = Size;
-        fs.setPath(path,size);
+        verbose = Verbose;
+        fs.setPath(path,size, verbose);
+
 
     }
 
