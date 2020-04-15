@@ -304,20 +304,20 @@ public class ClientClass implements Serializable {
 
         if (ParamParser.checkParam(cmd, "-rm")) {
 
-            File fexist = new File(utils.pathWithoutLast(path2));
+            File fexists = new File(utils.pathWithoutLast(path2));
 
             // caso copia ricorsiva di directory remota
-            if (ser.checkExists(path1) && fexist.exists()) {
+            if (ser.checkExists(path1) && fexists.exists()) {
                 System.out.println("Inizio copia ricorsiva ");
                 //il client in questo caso diventa il server ricevitore di file (FileServer) e il server diventa il FileClient
                 if (thread == null) {
                     if (verbose)
-                        thread = new FileServerThread(port2, path2, true, ser.getFile(path1).getSize());
+                        thread = new FileServerThread(port2, path2, verbose, ser.getFile(path1).getSize());
                     else
-                        thread = new FileServerThread(port2, path2, false, ser.getFile(path1).getSize());
+                        thread = new FileServerThread(port2, path2, verbose, ser.getFile(path1).getSize());
                     thread.start();
                 }
-                thread.setPath(path2,ser.getFile(path1).getSize(), true);
+                thread.setPath(path2,ser.getFile(path1).getSize(), verbose);
                 //recursiveCopy_remote(path1, path2, slave);
                 recursiveCopy_remote(path1, path2, ser);
             } else {
@@ -325,6 +325,7 @@ public class ClientClass implements Serializable {
                     utils.error_printer("la directory \"" + utils.getFileName(path1) + "\" non esiste!");
                 else
                     utils.error_printer("Percorso di destinazione errato!"+utils.pathWithoutLast(path2));
+                return false;
             }
             //}
 
@@ -341,31 +342,35 @@ public class ClientClass implements Serializable {
 
             } else {
                 utils.error_printer("La directory specificata non esiste!");
+                return false;
             }
 
         } else if (ParamParser.checkParam(cmd, "-m")) {
             // caso remoto (solo file)
-
+            File fexists = new File(utils.pathWithoutLast(path2));
             // path1 è il path del file remoto e path2 è il path del file in locale
             String location = ser.getFileLocation(path1);
            // System.out.println(location);
-            if (!location.equals("")) {
+            if (!location.equals("") && fexists.exists()) {
                 ServerInterface slave = ser.getSlaveNode(location);
                 //il client in questo caso diventa il server ricevitore di file (FileServer) e il server diventa il FileClient
                 if (thread == null) {
                     if (verbose)
-                        thread = new FileServerThread(port2, path2, true, ser.getFile(path1).getSize());
+                        thread = new FileServerThread(port2, path2, verbose, ser.getFile(path1).getSize());
                     else
-                        thread = new FileServerThread(port2, path2, false,ser.getFile(path1).getSize());
+                        thread = new FileServerThread(port2, path2, verbose,ser.getFile(path1).getSize());
                     thread.start();
                 }
-                thread.setPath(path2,ser.getFile(path1).getSize(), true);
+                thread.setPath(path2,ser.getFile(path1).getSize(), verbose);
                 String realPath = slave.getSharedDir()+path1;
                 slave.startFileClient(port2, getIp(), realPath);
 
 
             } else {
-                utils.error_printer("Il file \"" + utils.getFileName(path1) + "\" non esiste");
+                if(location.equals(""))
+                    utils.error_printer("Il file \"" + utils.getFileName(path1) + "\" non esiste");
+                else
+                    utils.error_printer("la directory \"" + utils.pathWithoutLast(path2) + "\" non esiste");
                 return false;
             }
 
