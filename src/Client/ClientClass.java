@@ -304,9 +304,10 @@ public class ClientClass implements Serializable {
 
         if (ParamParser.checkParam(cmd, "-rm")) {
 
+            File fexist = new File(utils.pathWithoutLast(path2));
 
             // caso copia ricorsiva di directory remota
-            if (ser.checkExists(path1)) {
+            if (ser.checkExists(path1) && fexist.exists()) {
                 System.out.println("Inizio copia ricorsiva ");
                 //il client in questo caso diventa il server ricevitore di file (FileServer) e il server diventa il FileClient
                 if (thread == null) {
@@ -320,7 +321,10 @@ public class ClientClass implements Serializable {
                 //recursiveCopy_remote(path1, path2, slave);
                 recursiveCopy_remote(path1, path2, ser);
             } else {
-                utils.error_printer("la directory \"" + utils.getFileName(path1) + "\" non esiste!");
+                if(!ser.checkExists(path1) )
+                    utils.error_printer("la directory \"" + utils.getFileName(path1) + "\" non esiste!");
+                else
+                    utils.error_printer("Percorso di destinazione errato!"+utils.pathWithoutLast(path2));
             }
             //}
 
@@ -419,7 +423,7 @@ public class ClientClass implements Serializable {
             String realRemote = slave.getSharedDir()+remotePath;
             boolean flag = slave.isDirectory(realRemote);
             //System.out.println("Setto la dimensione di: "+sm.getFile(realRemote).getSize()+"\n realremote: "+realRemote+" remote: "+remotePath);
-            thread.setPath(clientPath, sm.getFile(remotePath).getSize(), true);
+
             if (flag) {
 
                 mkdir(clientPath);
@@ -429,6 +433,7 @@ public class ClientClass implements Serializable {
                     recursiveCopy_remote(remotePathNew, clientPathNew, sm);
                 }
             } else {
+                thread.setPath(clientPath, sm.getFile(remotePath).getSize(), true);
                 //copia del singolo file
                 //System.out.println(realRemote);
                 if (slave.checkExists(realRemote))
@@ -780,6 +785,7 @@ public class ClientClass implements Serializable {
 //                                param[4] = param[4]+"/"+dirName;
                                     param[startIndex + 1] = client.genDestPath(param[startIndex], param[startIndex + 1], ser);
                                 }
+
 
                                 //controllo esistenza all'interno della funzione
                                 if (!(client.cp_func(ser, param[startIndex], param[startIndex + 1], ins, true))) {

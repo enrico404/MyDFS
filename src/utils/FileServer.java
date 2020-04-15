@@ -7,10 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.EnumSet;
 
 import utils.utils;
@@ -151,7 +148,7 @@ public class FileServer {
                 sock.close();
 
             }catch (NoSuchFileException e){
-                //per i trasferimenti ricorsivi viene fuori questa eccezzione, ma i file vengono  trasferiti comunque
+                //per i trasferimenti ricorsivi viene fuori questa eccezione (cerca di trasferire directory), ma i file vengono  trasferiti comunque
                 //correttamente
             }
             catch (IOException e) {
