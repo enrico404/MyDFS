@@ -7,10 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.EnumSet;
 
 import utils.utils;
@@ -80,9 +77,10 @@ public class FileServer {
      *
      * @param Path percorso in cui verrà trasferito il file
      */
-    public void setPath(String Path, long Size) {
+    public void setPath(String Path, long Size, boolean Verbose) {
         path = Path;
         size=Size;
+        verbose = Verbose;
     }
 
     /**
@@ -113,6 +111,7 @@ public class FileServer {
                 long total = 0;
                 float elapsedTime = 0;
                 long after = 0;
+
                 // This method is potentially much more efficient than a simple loop that reads from the source channel and writes to this channel.
                 // Many operating systems can transfer bytes directly from the source channel into the filesystem cache without actually copying them
                 // it uses the DMA
@@ -129,8 +128,8 @@ public class FileServer {
                         // buffer.clear();
 
                         if (elapsedTime > 0 && System.currentTimeMillis() % 100 == 0) {
-                            System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S\t | " +
-                                    "Scaricati: "+Converter.byte_to_humanS(total)+" / "+ Converter.byte_to_humanS(size));
+                            System.out.print("\rTransfer speed: " + Converter.byte_to_humanS(total / (elapsedTime / 1000)) + "/S | " +
+                                    "Scaricati: "+Converter.byte_to_humanS(total)+" / "+ Converter.byte_to_humanS(size)+" | File: "+utils.getFileName(path));
 
                         }
                     }
@@ -139,15 +138,17 @@ public class FileServer {
                 if (verbose) {
                     System.out.println("");
                     System.out.println("Trasferimento di: \"" + utils.getFileName(path) + "\" completato in: " + elapsedTime / 1000 + " Secondi");
+
                 }
 
 
                 System.out.println("File: " + path + " traferito con successo");
+                System.out.println("");
                 outChannel.close();
                 sock.close();
 
             }catch (NoSuchFileException e){
-                //per i trasferimenti ricorsivi viene fuori questa eccezzione, ma i file vengono  trasferiti comunque
+                //per i trasferimenti ricorsivi viene fuori questa eccezione (cerca di trasferire directory), ma i file vengono  trasferiti comunque
                 //correttamente
             }
             catch (IOException e) {
