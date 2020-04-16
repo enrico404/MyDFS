@@ -9,9 +9,7 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.MalformedURLException;
 import java.net.SocketException;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
+import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,9 +87,18 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @throws MalformedURLException
      */
     private void connectToDataServers() throws RemoteException, NotBoundException, MalformedURLException {
+
         for (String ip : ipArray) {
-            ServerInterface ser = (ServerInterface) Naming.lookup(ip);
-            slaveServers.add(ser);
+            try {
+                ServerInterface ser = (ServerInterface) Naming.lookup(ip);
+                slaveServers.add(ser);
+                //serve per vedere se effettivamente ho ottenuto una connessione all'oggetto funzionante
+                ser.getName();
+            }catch (ConnectIOException e){
+                utils.error_printer("È stato rilevato un guasto nel server: "+ip);
+            }catch(ConnectException e){
+                utils.error_printer("È stato rilevato un guasto nel server: "+ip);
+            }
 
         }
 
@@ -782,6 +789,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 //serM.selShared_dir(System.getProperty("user.home") + "/shDir");
                 //connetto il serverManger ai vari dataServer specificati
                 serM.connectToDataServers();
+                //update filesystem dir.
+
+
                 //serM.balance();
             } else {
                 System.err.println("Non sei connesso ad una rete locale");
