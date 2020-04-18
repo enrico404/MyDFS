@@ -397,6 +397,7 @@ public class ClientClass implements Serializable {
             for (ServerInterface slave : ser.getSlaveServers()) {
                 realRemotePath = slave.getSharedDir()+remotePath;
                 //System.out.println("real REM:"+realRemotePath);
+                ser.updateFileSystemTree(remotePath);
                 slave.mkdir(realRemotePath);
             }
             for (File sub : f.listFiles()) {

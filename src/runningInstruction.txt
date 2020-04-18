@@ -1,7 +1,10 @@
 Modalità di sviluppo
 
-Per ogni nodo
-	1) crea la directory condivisa
+Per ogni nodo:
+	- crea la directory condivisa
+
+
+Nel serverManager crea la directory MyDFS in /home/<user>/.config
 
 Attenzione: il nome dell'utente deve essere lo stesso per tutti quanti i nodi
 
@@ -38,8 +41,7 @@ Per compilare:
 	- apri un terminale in src
 	- esegui:
 
-	javac -d ../out/ Server/ServerInterface.java Server/ServerClass.java Client/ClientClass.java Server/ServerManagerInterface.java Server/ServerManager.java utils/utils.java utils/MyFileType.java utils/ConsoleColors.java utils/Converter.java Client/ParamParser.java
- 
+javac -d ../out/ Server/ServerInterface.java Server/ServerClass.java Client/ClientClass.java Server/ServerManagerInterface.java Server/ServerManager.java utils/utils.java utils/MyFileType.java utils/ConsoleColors.java utils/Converter.java Client/ParamParser.java Server/Tree.java
 
 ATTENZIONE:
     il file perm.policy deve trovarsi una cartella indietro dei file binari (c'è una copia di questo file nella carrtella src)

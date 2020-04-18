@@ -5,6 +5,7 @@ import utils.FileServerThread;
 import utils.MyFileType;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketException;
 import java.rmi.Remote;
@@ -31,10 +32,12 @@ public interface ServerManagerInterface extends Remote {
     String getIp() throws RemoteException, SocketException;
     String getFileLocation(String path1) throws RemoteException;
     boolean move(String path1, String path2,String loc1) throws IOException, InterruptedException;
-    boolean mkdir(String[] path, String currentPath) throws RemoteException;
+    boolean mkdir(String[] path, String currentPath) throws IOException;
     long getFreeSpace() throws RemoteException;
     long getClusterCapacity() throws RemoteException;
     String getFileType(String path) throws RemoteException;
     void recursiveCopyInt(String clientPath, String serverPath) throws IOException, RemoteException;
     MyFileType getFile(String path) throws RemoteException;
+    void updateFileSystemTree(String path, boolean delete) throws IOException, RemoteException;
+
 }

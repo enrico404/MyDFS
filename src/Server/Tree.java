@@ -1,33 +1,131 @@
 package Server;
 
+import javax.management.NotificationEmitter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import utils.utils;
+
 
 public class Tree implements Serializable {
-    static class Node {
-        String path;
-        String dirName;
-        ArrayList<Node> childs = new ArrayList<>();
+
+    public static class Node implements Serializable{
+        public String path;
+        public String dirName;
+        public ArrayList<Node> childs = new ArrayList<>();
 
         public Node(String Path, String Name){
-            this.path = path;
+            this.path = Path;
             this.dirName = Name;
         }
     }
 
-    public void insert(Node node, String Path, String Name){
-        Node newNode = new Node(Path, Name);
-        node.childs.add(newNode);
-        System.out.println("inserito nell'albero: "+ Name+" percorso: "+Path);
+
+    private Node root;
+    private static Node searchResult = null;
+    private ArrayList<String> dirs = new ArrayList<>();
+
+    public Tree(Node Root){
+        root = Root;
+
     }
 
-    public void trasverseTree(Node node){
+    public Node getRoot(){return root;}
+
+    public void insert(String Path, String Name){
+        Node newNode = new Node(Path, Name);
+        System.out.println("prima del find, sto cercando "+ Path+" "+ utils.pathWithoutLast(Path));
+
+        Node parent = find(root, utils.pathWithoutLast(Path));
+        System.out.println("Dopo find, parent: "+parent.path);
+        if(!utils.contains(parent.childs, newNode)) {
+            parent.childs.add(newNode);
+            dirs.add(Path);
+            System.out.println("inserito nell'albero: " + Name + " percorso: " + Path);
+        }
+    }
+
+    public ArrayList<String> getDirs(){
+        return dirs;
+    }
+
+
+    public void trasverseTree(){
+        trasverseTree(root);
+        System.out.println("");
+    }
+
+
+    private void trasverseTree(Node node){
         if(node != null){
-            System.out.println("Nome: "+ node.dirName+ " Path: "+node.path);
+            System.out.println("Path: "+node.path);
             for(Node el: node.childs){
                 trasverseTree(el);
             }
         }
+    }
+
+    public void deleteNode(String path){
+        deleteNode(root, path);
+    }
+
+    private void deleteNode(Node node, String path){
+        //prendo il padre e cancello collegamento
+        Node parent = find(root, utils.pathWithoutLast(path));
+        if(parent != null){
+            for(Node child: parent.childs){
+                if(child.path.equals(path)){
+                    parent.childs.remove(child);
+                }
+            }
+        }
+    }
+
+
+    public void init(){
+        dirs.clear();
+        init(root);
+    }
+
+    private void init(Node node){
+        if(node != null){
+            dirs.add(node.path);
+            for(Node el: node.childs){
+                init(el);
+            }
+        }
+    }
+
+
+    private Node find(Node rootNode, String Path){
+        getNode(rootNode, Path);
+        Node res = searchResult;
+        searchResult = null;
+        return res;
+
+    }
+
+
+    private void getNode(Node rootNode, String Path){
+            System.out.println(rootNode.path+" "+ Path);
+            String tmp = rootNode.path.substring(0, rootNode.path.length()-1);
+            // gestisco il / finale nel caso lo avessi, ci sono 4 casi differenti che posso avere
+            if(rootNode.path.equals(Path) || rootNode.path.equals(Path.substring(0, Path.length()-1)) || tmp.equals(Path.substring(0, Path.length()-1)) || tmp.equals(Path)){
+                searchResult = rootNode;
+            }
+            for(Node el: rootNode.childs){
+                getNode(el, Path);
+            }
+
+    }
+
+
+    public boolean checkTree(Tree fileSystemTree){
+        ArrayList<String> dirsExt = fileSystemTree.getDirs();
+        if(dirs.equals(dirsExt))
+            return true;
+        else
+            return false;
+
     }
 
 

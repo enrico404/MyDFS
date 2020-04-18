@@ -3,8 +3,7 @@ package Server;
 import utils.MyFileType;
 import utils.utils;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -56,6 +55,8 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      */
     private FileClient fc = null;
 
+    private Tree fileSystemTree = null;
+
 
     /**
      * Costruttore di default, va semplicemente a settare il nome del data node
@@ -66,6 +67,90 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public ServerClass(String Name) throws RemoteException {
         super();
         name = Name;
+
+        FileInputStream f = null;
+        ObjectInputStream in = null;
+
+        try {
+            f = new FileInputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTreeSlave");
+            in = new ObjectInputStream(f);
+            fileSystemTree = (Tree) in.readObject();
+
+
+
+        } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }finally{
+            if(in != null){
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if(f != null){
+                try {
+                    f.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if(fileSystemTree == null){
+                    Tree.Node root = new Tree.Node("/", "root");
+                    fileSystemTree = new Tree(root);
+                    fileSystemTree.init();
+            }
+
+        }
+    }
+
+
+    /**
+     * Metodo che si occupa di fare l'update del filesystem tree interno.
+     * @param path
+     * @throws IOException
+     * @throws RemoteException
+     */
+    @Override
+    public void updateFileSystemTree(String path, boolean delete) throws IOException, RemoteException {
+
+        if(fileSystemTree == null){
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+        System.out.println("Aggiorno filesystemtree: "+path);
+        FileOutputStream fout = new FileOutputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTreeSlave");
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+        System.out.println("Dopo apertura");
+        if(!delete)
+            fileSystemTree.insert(path, utils.getFileName(path));
+        else
+            fileSystemTree.deleteNode(path);
+        out.writeObject(fileSystemTree);
+        System.out.println("oggetto salvato");
+        out.close();
+        fout.close();
+
+    }
+
+
+    public boolean correct(Tree FileSystemTree) throws IOException {
+        ArrayList<String> listDirs = FileSystemTree.getDirs();
+        for(String dir: listDirs){
+            String realPath = getSharedDir()+dir;
+            if(!checkExists(realPath)) {
+                System.out.println("la directory "+ dir+" non esiste, la creo");
+                mkdir(realPath);
+            }
+        }
+        return true;
     }
 
     /**
@@ -291,7 +376,13 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         File f = new File(path);
         //se il file esiste
         if (f.exists()) {
-            if (f.delete()) {
+            if(f.isDirectory()){
+                if (f.delete()) {
+                    System.out.println("file " + path + " eliminato con successo");
+                    return true;
+                }
+            }
+            else if (f.delete()) {
                 System.out.println("file " + path + " eliminato con successo");
                 return true;
             }
@@ -330,6 +421,8 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         //se il file esiste
         if (f.exists()) {
             recursiveDelete(f);
+            //aggiorno fileSystemTree
+            fileSystemTree.deleteNode(path);
             System.out.println(path + " eliminato con successo!");
             return true;
         }
@@ -442,10 +535,21 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      * @throws RemoteException
      */
     @Override
-    public boolean mkdir(String path) throws RemoteException {
+    public boolean mkdir(String path) throws IOException {
         File f = new File(path);
+        String relativePath = path.substring(sharedDir.length());
+        updateFileSystemTree(relativePath, false);
         if (f.mkdir()) return true;
         return false;
+    }
+
+    /**
+     * Getter dell'attributo fileSystemTree
+     * @return fileSystemTree
+     */
+    @Override
+    public Tree getFileSystemTree(){
+        return fileSystemTree;
     }
 
     /**

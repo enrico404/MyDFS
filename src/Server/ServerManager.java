@@ -1,21 +1,16 @@
 package Server;
 
-import Client.ClientClass;
 import utils.MyFileType;
 import utils.utils;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Inet4Address;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-
 import utils.FileClient;
 
 
@@ -65,6 +60,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     private int port = 6770;
 
+    /**
+     * struttura dati contenente l'albero delle directory che devono avere tutti i data nodes
+     */
+    private Tree fileSystemTree = null;
+
+
 
     /**
      * Costruttore con parametri del nodeManager
@@ -73,11 +74,81 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @param IpArray lista di indirizzi ip dei nodi slave
      * @throws RemoteException
      */
-    protected ServerManager(String Name, ArrayList<String> IpArray) throws RemoteException {
+    protected ServerManager(String Name, ArrayList<String> IpArray) throws RemoteException{
         super();
         name = Name;
         ipArray = IpArray;
+
+
+        FileInputStream f = null;
+        ObjectInputStream in = null;
+        try {
+            f = new FileInputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree");
+            in = new ObjectInputStream(f);
+            fileSystemTree = (Tree) in.readObject();
+
+
+
+        } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }finally{
+            if(in != null){
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if(f != null){
+                try {
+                    f.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if(fileSystemTree == null){
+                Tree.Node root = new Tree.Node("/", "root");
+                fileSystemTree = new Tree(root);
+                fileSystemTree.init();
+            }
+
+        }
+
+
     }
+
+    /**
+     * Funzione interna per il check della consistenza delle directory trai i vari data nodes, viene eseguita subito dopo la connessione
+     * con i data nodes
+     * @return true se si è riusciti a rendere consistenti tra di loro tutti i nodi
+     */
+    private boolean consistency_check() throws IOException {
+
+        for(ServerInterface slave: slaveServers){
+            if(slave.getFileSystemTree() != null) {
+                System.out.println("Devo correggere: "+ !fileSystemTree.checkTree(slave.getFileSystemTree()));
+
+                System.out.println("slave: "+ slave.getName());
+                System.out.println(slave.getFileSystemTree().getDirs());
+                if (!fileSystemTree.checkTree(slave.getFileSystemTree())) {
+                    System.out.println("Il server: " + slave.getName() + " non è stato rilevato consistente");
+                    System.out.println("Correzione in corso...");
+                    if (slave.correct(fileSystemTree))
+                        System.out.println("Corretto con successo!");
+                    else
+                        utils.error_printer("Errore nella correzione del server!");
+                }
+            }
+        }
+        return true;
+    }
+
 
     /**
      * Funzione interna per la connessione del ServerManager ai vari nodi slave
@@ -86,25 +157,44 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @throws NotBoundException
      * @throws MalformedURLException
      */
-    private void connectToDataServers() throws RemoteException, NotBoundException, MalformedURLException {
-
+    private boolean connectToDataServers() throws IOException, NotBoundException {
+        int i=0;
         for (String ip : ipArray) {
             try {
                 ServerInterface ser = (ServerInterface) Naming.lookup(ip);
                 slaveServers.add(ser);
                 //serve per vedere se effettivamente ho ottenuto una connessione all'oggetto funzionante
+
                 ser.getName();
+                i++;
             }catch (ConnectIOException e){
                 utils.error_printer("È stato rilevato un guasto nel server: "+ip);
+                System.out.println(slaveServers);
+                slaveServers.remove(i);
+
+
             }catch(ConnectException e){
                 utils.error_printer("È stato rilevato un guasto nel server: "+ip);
+                slaveServers.remove(i);
             }
 
         }
 
+        if (fileSystemTree != null) {
+            System.out.println("Il file system tree è il seguente: ");
+            fileSystemTree.trasverseTree();
+        }
+        System.out.println("slave servers");
+        for(ServerInterface slave: slaveServers){
+            System.out.println(slave.getName());
+        }
+        if(!consistency_check()){
+            return false;
+        }
+
+        return true;
     }
 
-    // INTERFACE METHODS
 
     /**
      * Metodo che ritorna l'indice del nodo slave con più spazio libero sul disco. Meccanismo di loadBalancing greedy.
@@ -371,6 +461,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             String realPath = slave.getSharedDir()+path;
             //se esiste il file nello slave, il file è supposto univoco
             if (slave.checkExists(realPath)) {
+                //aggiorno fileSystemTree serverManager
+                fileSystemTree.deleteNode(path);
                 if (!(slave.rm_func_rec(realPath)))
                     err_canc = true;
             }
@@ -439,6 +531,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 //ser.mkdir(param, this.getCurrentPath());
                 realServerPath = slave.getSharedDir()+serverPath;
 //                System.out.println("Creo directory : "+realServerPath);
+                updateFileSystemTree(serverPath, false);
                 slave.mkdir(realServerPath);
                 for (File sub : slave.listFiles(realClientPath)) {
                     String newClientPath = clientPath + '/' + sub.getName();
@@ -630,6 +723,34 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     }
 
     /**
+     * Metodo che si occupa di fare l'update del filesystem tree interno.
+     * @param path
+     * @throws IOException
+     * @throws RemoteException
+     */
+    @Override
+    public void updateFileSystemTree(String path, boolean delete) throws IOException, RemoteException {
+
+        if(fileSystemTree == null){
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+
+        FileOutputStream fout = new FileOutputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree");
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+        if(!delete)
+            fileSystemTree.insert(path, utils.getFileName(path));
+        else
+            fileSystemTree.deleteNode(path);
+        out.writeObject(fileSystemTree);
+        out.close();
+        fout.close();
+
+    }
+
+
+    /**
      * Metodo per la creazione di directory sui nodi slave, dato in input il nome di una/più directory viene creata la stessa
      * directory per ogni slave nodes, in questo modo si mantiene una struttura del file system coerente per ogni nodo
      * e si riesce a scalare lo spazio di memorizzazione molto meglio
@@ -640,7 +761,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @throws RemoteException
      */
     @Override
-    public boolean mkdir(String[] param, String currentPath) throws RemoteException {
+    public boolean mkdir(String[] param, String currentPath) throws IOException {
+
+
+
         String realPath = "";
         for (int i = 1; i < param.length; i++) {
 
@@ -660,14 +784,19 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //                ServerInterface slave = getSlaveNode(loc);
                 for (ServerInterface slave : slaveServers) {
                     realPath = slave.getSharedDir()+param[i];
+                    updateFileSystemTree(currentPath+ "/" + param[i], false);
                     slave.mkdir(realPath);
                 }
             } else {
                 //caso in cui scrivo solo il nome della cartella
                 for (ServerInterface slave : slaveServers) {
                     realPath = slave.getSharedDir()+currentPath;
-                    if (slave.checkExists(realPath))
-                        slave.mkdir(realPath + "/" + param[i]);
+                    if (slave.checkExists(realPath)) {
+                        realPath = realPath + "/" + param[i];
+                        //System.out.println(currentPath+ "/" + param[i]);
+                        updateFileSystemTree(currentPath+ "/" + param[i], false);
+                        slave.mkdir(realPath);
+                    }
                 }
             }
         }
@@ -788,7 +917,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
                 //serM.selShared_dir(System.getProperty("user.home") + "/shDir");
                 //connetto il serverManger ai vari dataServer specificati
-                serM.connectToDataServers();
+                if(!serM.connectToDataServers()){
+                    utils.error_printer("Errore nei data nodes");
+                    return;
+                }
                 //update filesystem dir.
 
 

@@ -1,6 +1,7 @@
 package utils;
 
 import Client.ClientClass;
+import Server.Tree;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -74,6 +75,21 @@ public class utils {
     public static boolean contains(String[] array, String val, int index){
         if (array.length > index){
             if(array[index].equals(val)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Metodo per controllare se un array di Nodi, contiene il nodo specificato
+     * @param array array di nodi
+     * @param node nodo da cercare
+     * @return true se lo contiene, false altrimenti
+     */
+    public static boolean contains(ArrayList<Tree.Node> array, Tree.Node node){
+        for(Tree.Node n: array){
+            if(n.path.equals(node.path)){
+                return true;
+            }
         }
         return false;
     }
