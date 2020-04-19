@@ -433,11 +433,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @throws RemoteException
      */
     @Override
-    public boolean rm_func(String path) throws RemoteException {
+    public boolean rm_func(String path) throws IOException {
         for (ServerInterface slave : slaveServers) {
             String realPath = slave.getSharedDir()+path;
             //se esiste il file nello slave, il file è supposto univoco
             if (slave.checkExists(realPath)) {
+                updateFileSystemTree(path, true);
                 if (slave.rm_func(realPath))
                     return true;
             }
@@ -455,14 +456,14 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @throws RemoteException
      */
     @Override
-    public boolean rm_func_rec(String path) throws RemoteException {
+    public boolean rm_func_rec(String path) throws IOException {
         boolean err_canc = false;
         for (ServerInterface slave : slaveServers) {
             String realPath = slave.getSharedDir()+path;
             //se esiste il file nello slave, il file è supposto univoco
             if (slave.checkExists(realPath)) {
                 //aggiorno fileSystemTree serverManager
-                fileSystemTree.deleteNode(path);
+                updateFileSystemTree(path, true);
                 if (!(slave.rm_func_rec(realPath)))
                     err_canc = true;
             }
@@ -648,6 +649,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 ServerInterface slave = getSlaveNode(loc1);
                 realPath1 = slave.getSharedDir()+path1;
                 realPath2 = slave.getSharedDir()+path2;
+                //aggiorno fileSystemTree di serverManager e slave
+                updateFileSystemTree_move(path1, path2);
+                slave.updateFileSystemTree_move(path1, path2);
+
                 slave.move(realPath1, realPath2);
             }
 
@@ -663,6 +668,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 realPath1 = slave.getSharedDir()+path1;
                 realPath2 = slave.getSharedDir()+path2;
                 if (path1 != path2) {
+                    //aggiorno fileSystemTree di serverManager e slave
+                    updateFileSystemTree_move(path1, path2);
+                    slave.updateFileSystemTree_move(path1, path2);
+
                     slave.move(realPath1, realPath2);
                 }
             }
@@ -743,6 +752,32 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             fileSystemTree.insert(path, utils.getFileName(path));
         else
             fileSystemTree.deleteNode(path);
+        out.writeObject(fileSystemTree);
+        out.close();
+        fout.close();
+
+    }
+
+
+    /**
+     * Metodo che si occupa di fare l'update del filesystem tree interno in caso di movimento di directory
+     * @param path1 percorso iniziale
+     * @param path2 nuovo percorso
+     * @throws IOException
+     * @throws RemoteException
+     */
+    @Override
+    public void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException {
+
+        if(fileSystemTree == null){
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+
+        FileOutputStream fout = new FileOutputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree");
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+        fileSystemTree.move(path1, path2);
         out.writeObject(fileSystemTree);
         out.close();
         fout.close();

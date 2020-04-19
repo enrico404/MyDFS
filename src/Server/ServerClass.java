@@ -140,9 +140,42 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
 
     }
 
+    /**
+     * Metodo che si occupa di fare l'update del filesystem tree interno in caso di movimento di directory
+     * @param path1 percorso iniziale
+     * @param path2 nuovo percorso
+     * @throws IOException
+     * @throws RemoteException
+     */
+    @Override
+    public void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException {
 
+        if(fileSystemTree == null){
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+
+        FileOutputStream fout = new FileOutputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTreeSlave");
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+        fileSystemTree.move(path1, path2);
+        out.writeObject(fileSystemTree);
+        out.close();
+        fout.close();
+
+    }
+
+
+    /**
+     * Metodo per la correzione del tree di directory nel nodo slave. Devo gestire sia i casi di creazione, rimozione e
+     * movimento di directory. "listDirs" è la lista di directory aggiornata.
+     * @param FileSystemTree fileSystemTree del serverManager aggiornato
+     * @return true in caso di correzione con succcesso
+     * @throws IOException
+     */
     public boolean correct(Tree FileSystemTree) throws IOException {
         ArrayList<String> listDirs = FileSystemTree.getDirs();
+        //ciclo per vedere se ho directory nuove da aggiungere
         for(String dir: listDirs){
             String realPath = getSharedDir()+dir;
             if(!checkExists(realPath)) {
@@ -150,6 +183,20 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                 mkdir(realPath);
             }
         }
+
+        String delPath = "";
+        //ciclo per vedere se devo rimuovere delle directory nello slave
+        for(String dir: fileSystemTree.getDirs()){
+            //se la directory dello slave non è presente nel fileSystemTree del serverManager, la devo eliminare
+            if(!utils.contains(FileSystemTree.getDirs(), dir)){
+                String realPath = getSharedDir()+dir;
+                rm_func_rec(realPath);
+                delPath = dir;
+                break;
+            }
+        }
+        if(!delPath.equals(""))
+            updateFileSystemTree(delPath, true);
         return true;
     }
 

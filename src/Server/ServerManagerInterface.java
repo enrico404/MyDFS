@@ -23,8 +23,8 @@ public interface ServerManagerInterface extends Remote {
     ArrayList<ServerInterface> getSlaveServers() throws RemoteException;
     boolean selShared_dir(String path) throws RemoteException;
     boolean checkExists(String s) throws RemoteException;
-    boolean rm_func(String path) throws RemoteException;
-    boolean rm_func_rec(String path) throws RemoteException;
+    boolean rm_func(String path) throws IOException;
+    boolean rm_func_rec(String path) throws IOException;
     boolean cp_func(String localPath, String remotePath) throws IOException;
     ServerInterface getSlaveNode(int index) throws RemoteException;
     ServerInterface getSlaveNode(String name) throws RemoteException;
@@ -39,5 +39,6 @@ public interface ServerManagerInterface extends Remote {
     void recursiveCopyInt(String clientPath, String serverPath) throws IOException, RemoteException;
     MyFileType getFile(String path) throws RemoteException;
     void updateFileSystemTree(String path, boolean delete) throws IOException, RemoteException;
+    void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException;
 
 }

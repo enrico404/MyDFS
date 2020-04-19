@@ -36,6 +36,7 @@ public interface ServerInterface extends Remote {
     boolean move(String path1, String path2) throws IOException;
     boolean startFileServer(int port, String path, long size) throws IOException;
     void updateFileSystemTree(String path, boolean delete) throws IOException, RemoteException;
+    void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException;
     Tree getFileSystemTree() throws RemoteException;
     boolean correct(Tree FileSystemTree) throws IOException;
 

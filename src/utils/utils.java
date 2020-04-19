@@ -66,6 +66,19 @@ public class utils {
     }
 
     /**
+     * Metodo per controllare se un array di tipo ArrayList contiene una determinata stringa
+     * @param array array di stringhe in input
+     * @param val Stringa da cercare nell'array
+     * @return ritorna true se l'array contiene la stringa val
+     */
+    public static boolean contains(ArrayList<String> array, String val){
+        for(String el: array){
+            if(el.equals(val)) return true;
+        }
+        return false;
+    }
+
+    /**
      * Metodo per controllare se un array contiene una determinata stringa in una certa posizione
      * @param array array di stringhe in input
      * @param val Stringa da cercare nell'array
@@ -78,6 +91,8 @@ public class utils {
         }
         return false;
     }
+
+
 
     /**
      * Metodo per controllare se un array di Nodi, contiene il nodo specificato

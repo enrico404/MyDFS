@@ -218,7 +218,7 @@ public class ClientClass implements Serializable {
      * @return true se la cancellazione  dei file è stata eseguita con successo, false altrimenti
      * @throws RemoteException
      */
-    public boolean rm_func(ServerManagerInterface ser, ArrayList<String> paths) throws RemoteException {
+    public boolean rm_func(ServerManagerInterface ser, ArrayList<String> paths) throws IOException {
         for (String path : paths) {
             //se fallisce la cancellazione
             if (!(ser.rm_func(currentPath + '/' + path))) {
@@ -239,7 +239,7 @@ public class ClientClass implements Serializable {
      * @return true se l'eliminazione della directory avviene con successo, false altrimenti.
      * @throws RemoteException
      */
-    public boolean rm_func_rec(ServerManagerInterface ser, ArrayList<String> paths) throws RemoteException {
+    public boolean rm_func_rec(ServerManagerInterface ser, ArrayList<String> paths) throws IOException {
         for (String path : paths) {
             //se fallisce la cancellazione
             if (!(ser.rm_func_rec(currentPath + '/' + path))) {
@@ -397,7 +397,7 @@ public class ClientClass implements Serializable {
             for (ServerInterface slave : ser.getSlaveServers()) {
                 realRemotePath = slave.getSharedDir()+remotePath;
                 //System.out.println("real REM:"+realRemotePath);
-                ser.updateFileSystemTree(remotePath);
+                ser.updateFileSystemTree(remotePath, false);
                 slave.mkdir(realRemotePath);
             }
             for (File sub : f.listFiles()) {
