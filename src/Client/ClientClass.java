@@ -644,6 +644,10 @@ public class ClientClass implements Serializable {
                 ServerManagerInterface ser = (ServerManagerInterface) Naming.lookup(serverAdd);
                 System.out.println(ConsoleColors.GREEN + "Connesso al cluster correttamente!" + ConsoleColors.RESET);
                 ClientClass client = new ClientClass(ser);
+                //creo un thread che controlla che il client sia connesso almeno ad un data node
+                ServersConnectedChecker serverStatusChecker = new ServersConnectedChecker(ser);
+                serverStatusChecker.start();
+
                 boolean exit = false;
                 while (!exit) {
                     try {

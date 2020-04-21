@@ -18,39 +18,45 @@ public class AsyncServersChecker extends Thread {
         ser.getSlaveServers().remove(i);
 
         ArrayList<SlaveServerCache> slaveServerCaches = ser.getSlaveServerCaches();
-        for(int j=0; j<slaveServerCaches.size(); j++){
-            if(!slaveServerCaches.get(j).getName().equals(ser.getSlaveServers().get(j).getName())){
-                utils.error_printer("È stato rilevato un guasto nel server: "+slaveServerCaches.get(j).getName());
+        ArrayList<String> slaveServerNames = new ArrayList<>();
+        for(ServerInterface slave: ser.getSlaveServers()){
+            slaveServerNames.add(slave.getName());
+        }
 
+        for(SlaveServerCache slaveCache: slaveServerCaches){
+            if(!utils.contains(slaveServerNames, slaveCache.getName())){
+                utils.error_printer("È stato rilevato un guasto nel server: "+slaveCache.getName());
                 //reconnecter thread
-                ReconnecterThread reconnecter = new ReconnecterThread(slaveServerCaches.get(j), ser);
+                ReconnecterThread reconnecter = new ReconnecterThread(slaveCache, ser);
                 reconnecter.start();
-                //devo uscire subito dal ciclo, altrimenti vado outofbounds
-                break;
             }
         }
+
     }
 
 
     public void run() {
 
         while (true) {
-            int i = 0;
+
 
             try {
                 ArrayList<ServerInterface> slaveServers = ser.getSlaveServers();
-                for (ServerInterface slave : slaveServers) {
+
+                for(int j=0; j<slaveServers.size(); j++){
                     try {
 
-                        //serve per vedere se effettivamente ho ottenuto una connessione all'oggetto funzionante
-                        slave.getName();
-                        i++;
+                        //serve per vedere se effettivamente ho ottenuto una connessione all'oggetto funzionante, se non
+                        //funziona viene lanciata una delle due eccezioni
+                        slaveServers.get(j).getName();
+
                     } catch (ConnectIOException e) {
-                        manageServerCrashed(i, ser);
+                        manageServerCrashed(j, ser);
 
                     } catch (ConnectException e) {
-                        manageServerCrashed(i, ser);
+                        manageServerCrashed(j, ser);
                     }
+
 
                 }
             } catch (RemoteException e) { }
