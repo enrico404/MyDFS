@@ -55,6 +55,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * Array contenente tutti i riferimenti ai nodi slave che gestisce
      */
     private ArrayList<ServerInterface> slaveServers = new ArrayList<ServerInterface>();
+
+    /**
+     * Array che contiene dati (nome e ip) degli slaves a cui il serverManager è connesso
+     */
+    private ArrayList<SlaveServerCache> slaveServerCaches = new ArrayList<>();
+
     /**
      * porta utilizzata per il trasferimento di file interni al cluster
      */
@@ -124,25 +130,39 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     }
 
     /**
-     * Funzione interna per il check della consistenza delle directory trai i vari data nodes, viene eseguita subito dopo la connessione
+     * Getter dell'array slaveServerCaches
+     * @return array contenente il nome degli slave servers a cui il serverManager è connesso
+     */
+    @Override
+    public ArrayList<SlaveServerCache> getSlaveServerCaches() throws RemoteException{
+        return slaveServerCaches;
+    }
+
+
+    /**
+     * Funzione per il check della consistenza delle directory tra i vari data nodes, viene eseguita subito dopo la connessione
      * con i data nodes
      * @return true se si è riusciti a rendere consistenti tra di loro tutti i nodi
      */
-    private boolean consistency_check() throws IOException {
+    @Override
+    public boolean consistency_check() throws IOException {
 
         for(ServerInterface slave: slaveServers){
             if(slave.getFileSystemTree() != null) {
-                System.out.println("Devo correggere: "+ !fileSystemTree.checkTree(slave.getFileSystemTree()));
+               // System.out.println("Devo correggere: "+ !fileSystemTree.checkTree(slave.getFileSystemTree()));
 
-                System.out.println("slave: "+ slave.getName());
-                System.out.println(slave.getFileSystemTree().getDirs());
+//                System.out.println("slave: "+ slave.getName());
+//                System.out.println(slave.getFileSystemTree().getDirs());
                 if (!fileSystemTree.checkTree(slave.getFileSystemTree())) {
                     System.out.println("Il server: " + slave.getName() + " non è stato rilevato consistente");
+                    System.out.println(slave.getFileSystemTree().getDirs());
                     System.out.println("Correzione in corso...");
-                    if (slave.correct(fileSystemTree))
-                        System.out.println("Corretto con successo!");
-                    else
-                        utils.error_printer("Errore nella correzione del server!");
+
+                    while(slave.correct(fileSystemTree)){
+                        System.out.println("Correzzione effettuata");
+                    }
+                    System.out.println("La correzione del nodo è stata completata con successo!");
+                    System.out.println(slave.getFileSystemTree().getDirs());
                 }
             }
         }
@@ -164,8 +184,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 ServerInterface ser = (ServerInterface) Naming.lookup(ip);
                 slaveServers.add(ser);
                 //serve per vedere se effettivamente ho ottenuto una connessione all'oggetto funzionante
-
                 ser.getName();
+
+                SlaveServerCache cache = new SlaveServerCache(ser.getName(), ip);
+                slaveServerCaches.add(cache);
                 i++;
             }catch (ConnectIOException e){
                 utils.error_printer("È stato rilevato un guasto nel server: "+ip);
@@ -184,7 +206,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             System.out.println("Il file system tree è il seguente: ");
             fileSystemTree.trasverseTree();
         }
-        System.out.println("slave servers");
+        System.out.println("Slave servers a cui sono connesso:");
         for(ServerInterface slave: slaveServers){
             System.out.println(slave.getName());
         }
@@ -193,6 +215,17 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         }
 
         return true;
+    }
+
+    /**
+     * Metodo per il checking dello stato degli slave nodes, se uno slave node crasha, questo viene rimosso dalla lista
+     * di servers a cui il ServerManager è connesso e riportato all'utente.
+     * @throws RemoteException
+     */
+    @Override
+    public void asyncServersChecking() throws RemoteException{
+        AsyncServersChecker threadChecker = new AsyncServersChecker(this);
+        threadChecker.start();
     }
 
 
@@ -464,6 +497,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             if (slave.checkExists(realPath)) {
                 //aggiorno fileSystemTree serverManager
                 updateFileSystemTree(path, true);
+                //aggiorno fileSystemTree del nodo slave
+                slave.updateFileSystemTree(path, true);
                 if (!(slave.rm_func_rec(realPath)))
                     err_canc = true;
             }
@@ -956,7 +991,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     utils.error_printer("Errore nei data nodes");
                     return;
                 }
-                //update filesystem dir.
+                serM.asyncServersChecking();
 
 
                 //serM.balance();

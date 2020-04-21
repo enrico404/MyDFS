@@ -20,6 +20,7 @@ public interface ServerManagerInterface extends Remote {
     ArrayList<MyFileType> ls_func(String path) throws RemoteException;
     ArrayList<MyFileType> ls_func(String path, boolean dirCapacity) throws RemoteException;
     String getSharedDir() throws RemoteException;
+    ArrayList<SlaveServerCache> getSlaveServerCaches() throws RemoteException;
     ArrayList<ServerInterface> getSlaveServers() throws RemoteException;
     boolean selShared_dir(String path) throws RemoteException;
     boolean checkExists(String s) throws RemoteException;
@@ -40,5 +41,6 @@ public interface ServerManagerInterface extends Remote {
     MyFileType getFile(String path) throws RemoteException;
     void updateFileSystemTree(String path, boolean delete) throws IOException, RemoteException;
     void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException;
-
+    void asyncServersChecking() throws RemoteException;
+    boolean consistency_check() throws IOException;
 }

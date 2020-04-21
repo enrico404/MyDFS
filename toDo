@@ -2,3 +2,8 @@
 
 2) GUI (??)
 3) data replication
+
+
+Bugs:
+
+rm -rf dir che non esiste

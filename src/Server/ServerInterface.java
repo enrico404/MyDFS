@@ -40,4 +40,5 @@ public interface ServerInterface extends Remote {
     Tree getFileSystemTree() throws RemoteException;
     boolean correct(Tree FileSystemTree) throws IOException;
 
+
 }

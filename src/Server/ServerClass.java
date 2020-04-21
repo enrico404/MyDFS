@@ -125,16 +125,16 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
             fileSystemTree = new Tree(root);
             fileSystemTree.init();
         }
-        System.out.println("Aggiorno filesystemtree: "+path);
+       // System.out.println("Aggiorno filesystemtree: "+path);
         FileOutputStream fout = new FileOutputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTreeSlave");
         ObjectOutputStream out = new ObjectOutputStream(fout);
-        System.out.println("Dopo apertura");
+      //  System.out.println("Dopo apertura");
         if(!delete)
             fileSystemTree.insert(path, utils.getFileName(path));
         else
             fileSystemTree.deleteNode(path);
         out.writeObject(fileSystemTree);
-        System.out.println("oggetto salvato");
+       // System.out.println("oggetto salvato");
         out.close();
         fout.close();
 
@@ -174,6 +174,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      * @throws IOException
      */
     public boolean correct(Tree FileSystemTree) throws IOException {
+        boolean modified = false;
         ArrayList<String> listDirs = FileSystemTree.getDirs();
         //ciclo per vedere se ho directory nuove da aggiungere
         for(String dir: listDirs){
@@ -181,6 +182,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
             if(!checkExists(realPath)) {
                 System.out.println("la directory "+ dir+" non esiste, la creo");
                 mkdir(realPath);
+                modified = true;
             }
         }
 
@@ -192,12 +194,13 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
                 String realPath = getSharedDir()+dir;
                 rm_func_rec(realPath);
                 delPath = dir;
+                modified = true;
                 break;
             }
         }
         if(!delPath.equals(""))
             updateFileSystemTree(delPath, true);
-        return true;
+        return modified;
     }
 
     /**
@@ -228,7 +231,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     @Override
     public void setSharedDir(String path) throws RemoteException {
         sharedDir = path;
-        System.out.println("Direcotory condivisa settata con successo!");
+        System.out.println("Directory condivisa settata con successo!");
         System.out.println("Percorso: " + sharedDir);
     }
 
@@ -468,8 +471,6 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         //se il file esiste
         if (f.exists()) {
             recursiveDelete(f);
-            //aggiorno fileSystemTree
-            fileSystemTree.deleteNode(path);
             System.out.println(path + " eliminato con successo!");
             return true;
         }

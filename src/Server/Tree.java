@@ -37,10 +37,12 @@ public class Tree implements Serializable {
 
         Node parent = find(root, utils.pathWithoutLast(Path));
         //System.out.println("Dopo find, parent: "+parent.path);
-        if(!utils.contains(parent.childs, newNode)) {
-            parent.childs.add(newNode);
-            dirs.add(Path);
-           // System.out.println("inserito nell'albero: " + Name + " percorso: " + Path);
+        if(parent != null) {
+            if (!utils.contains(parent.childs, newNode)) {
+                parent.childs.add(newNode);
+                dirs.add(Path);
+                // System.out.println("inserito nell'albero: " + Name + " percorso: " + Path);
+            }
         }
     }
 
@@ -65,10 +67,10 @@ public class Tree implements Serializable {
     }
 
     public void deleteNode(String path){
-        deleteNode(root, path);
+        deleteNode_int(path);
     }
 
-    private void deleteNode(Node node, String path){
+    private void deleteNode_int(String path){
         //prendo il padre e cancello collegamento
         Node parent = find(root, utils.pathWithoutLast(path));
         if(parent != null){
@@ -116,7 +118,7 @@ public class Tree implements Serializable {
 
 
     private void getNode(Node rootNode, String Path){
-            System.out.println(rootNode.path+" "+ Path);
+            //System.out.println(rootNode.path+" "+ Path);
             String tmp = rootNode.path.substring(0, rootNode.path.length()-1);
             // gestisco il / finale nel caso lo avessi, ci sono 4 casi differenti che posso avere
             if(rootNode.path.equals(Path) || rootNode.path.equals(Path.substring(0, Path.length()-1)) || tmp.equals(Path.substring(0, Path.length()-1)) || tmp.equals(Path)){
@@ -162,9 +164,9 @@ public class Tree implements Serializable {
         }
 
 
-        System.out.println("------Dopo movimento-------");
-        trasverseTree();
-        System.out.println(dirs);
+//        System.out.println("------Dopo movimento-------");
+//        trasverseTree();
+//        System.out.println(dirs);
 
     }
 

@@ -41,7 +41,6 @@ Per compilare:
 	- apri un terminale in src
 	- esegui:
 
-javac -d ../out/ Server/ServerInterface.java Server/ServerClass.java Client/ClientClass.java Server/ServerManagerInterface.java Server/ServerManager.java utils/utils.java utils/MyFileType.java utils/ConsoleColors.java utils/Converter.java Client/ParamParser.java Server/Tree.java
-
+javac -d ../out/ Server/*.java Client/*.java utils/*.java
 ATTENZIONE:
     il file perm.policy deve trovarsi una cartella indietro dei file binari (c'è una copia di questo file nella carrtella src)
