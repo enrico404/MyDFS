@@ -8,6 +8,7 @@ import utils.Helper;
 
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.rmi.Naming;
@@ -675,18 +676,18 @@ public class ClientClass implements Serializable {
                     ser.getIp();
                     //esco se non genera eccezzioni perchè ho trovato un serverManager valido
                     i = args.length;
-                } catch (Exception e) {
-
-                }
-
+                } catch (Exception e) {}
 
             }
             if (ser == null) {
                 utils.error_printer("Non è stato trovato un server manager valido!");
                 return;
             }
+            ClientClass client = null;
+            try {
+                client = new ClientClass(ser);
+            }catch (Exception e){utils.error_printer("Errore nella connessione con il serverManager");}
             System.out.println(ConsoleColors.GREEN_BOLD + "Connesso al cluster correttamente!" + ConsoleColors.RESET);
-            ClientClass client = new ClientClass(ser);
             System.out.println("ServerManager ip: "+ client.getSer().getIp());
             //creo un thread che controlla che il client sia connesso almeno ad un data node
             ServersConnectedChecker serverStatusChecker = new ServersConnectedChecker(ser);
@@ -959,6 +960,7 @@ public class ClientClass implements Serializable {
         } catch (MalformedURLException | InterruptedException e) {
             e.printStackTrace();
         }
+
 
 
     }

@@ -20,13 +20,19 @@ Server:
 
 	java -Djava.security.policy=./perm.policy Server/ServerClass <dir_condivisa>
 
+in caso di crash di qualche server (ma non tutti) il sistema continua a funzionare
+
 serverManager:
 	- avvia rmregistry se non è già stato avviato nell'host
 	- apri un terminale in out ed esegui:
 
-	java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>...
+	java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>... [-s/-p ip_serverManager primario/secondario]
 
+    opzioni:
+        -   -s: indica il serverManager secondario a cui fare riferimento
+        -   -p: indica il serverPrimario a cui fare riferimento
 
+in caso di crash di uno dei due serverManager, il sistema continua a funzionare
 
 Client: 
 	- apri un terminale e spostati nella cartella out

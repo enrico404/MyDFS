@@ -28,12 +28,13 @@ public class SecondaryServerUpdater extends Thread {
 
                 File f = new File(fileSystemTreePath);
                 if (f.exists()) {
-
+                    System.out.println("prova");
                     fc = new FileClient(port, secondaryServerIP);
                     fc.send(fileSystemTreePath, true, f.length());
 
                 }
-                Thread.sleep(10000);
+
+                Thread.sleep(1000);
             }
 
 

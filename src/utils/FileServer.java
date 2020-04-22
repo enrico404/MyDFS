@@ -105,6 +105,7 @@ public class FileServer {
                         StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE
                 ));
 
+
                 //ByteBuffer buffer = ByteBuffer.allocate(4096);
                 long read = 0;
                 long before = System.currentTimeMillis();
@@ -141,9 +142,10 @@ public class FileServer {
 
                 }
 
-
-                System.out.println("File: " + path + " traferito con successo");
-                System.out.println("");
+                if(verbose) {
+                    System.out.println("File: " + path + " traferito con successo");
+                    System.out.println("");
+                }
                 outChannel.close();
                 sock.close();
 
