@@ -12,6 +12,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 import utils.FileClient;
+import Client.ParamParser;
+import utils.FileServerThread;
 
 
 /**
@@ -80,7 +82,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @param IpArray lista di indirizzi ip dei nodi slave
      * @throws RemoteException
      */
-    protected ServerManager(String Name, ArrayList<String> IpArray) throws RemoteException{
+    public ServerManager(String Name, ArrayList<String> IpArray) throws RemoteException{
         super();
         name = Name;
         ipArray = IpArray;
@@ -127,6 +129,24 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         }
 
 
+    }
+
+    /**
+     * Getter del nome del serverManager
+     * @return
+     */
+    @Override
+    public String getName() throws RemoteException {
+        return name;
+    }
+
+    /**
+     * Setter del nome del serverManager
+     * @param name
+     */
+    @Override
+    public void setName(String name) throws RemoteException{
+        this.name = name;
     }
 
     /**
@@ -962,12 +982,62 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @param args lista di indirizzi ip dei vari nodi slave appartenenti al cluster
      * @throws RemoteException
      */
-    public static void main(String args[]) throws RemoteException {
+    public static void main(String args[]) {
 
         ArrayList<String> ipArr = new ArrayList<String>();
 
-        for (String ip : args) {
-            ipArr.add(ip);
+        String commandString = "";
+        for(String cmd: args){
+            commandString += cmd;
+        }
+
+        String primarySerIP = "";
+        String secondarySerIP = "";
+        //sono un serverManager secondario
+        if(ParamParser.checkParam(commandString, "-p")){
+
+
+
+            for(int i=0; i<args.length; i++){
+                // il prossimo parametro è l'ip del server primario
+                if(args[i].equals("-p")){
+                    //se viene specificato un ip dopo il parametro
+                    if(i<args.length-1) {
+                        i++;
+                        primarySerIP = args[i];
+
+                    }
+                    else{
+                        utils.error_printer("Non è stato specificato l'ip del serverManager primario!");
+                    }
+                }
+            }
+
+        }
+
+        //sono un serverManager primario
+        else if(ParamParser.checkParam(commandString, "-s")){
+
+            for(int i=0; i<args.length; i++){
+                // il prossimo parametro è l'ip del server primario
+                if(args[i].equals("-s")){
+                    //se viene specificato un ip dopo il parametro
+                    if(i<args.length-1) {
+                        i++;
+                        secondarySerIP = args[i];
+
+                    }
+                    else{
+                        utils.error_printer("Non è stato specificato l'ip del serverManager secondario!");
+                    }
+                }
+            }
+        }
+        //non ho specificato niente, modalità di esecuzione come serverManager singolo
+        else {
+            for (String ip : args) {
+                ipArr.add(ip);
+            }
         }
 
         if (System.getSecurityManager() == null) {
@@ -984,6 +1054,34 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 System.out.println();
                 System.out.println("ServerManager bindato nel registry");
                 System.out.println("Indirizzo ip bindato: " + myIp);
+
+
+
+                int port1 = 6660;
+
+                //se primarySerIP ha al suo interno un valore, vuol dire che sono il server secondario
+                // e devo aggiornare il fileSystemTree in base al primario.
+                //se secondarySerIP ha al suo interno un valore, vuol dire che sono il server primario
+                //e devo tenere aggiornato il fileSystemTree secondario.
+                //Lancio un thread che aggiorna ogni 10 secondi i dati del server secondario
+                if(!secondarySerIP.equals("") || !primarySerIP.equals("") ){
+
+                    //faccio partire il server ricevente per il filesystem del primario
+                    String fileSystemTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
+                    //size casuale, tanto non viene utilizzata
+                    FileServerThread receiverThread = new FileServerThread(port1, fileSystemTreePath, false, 100);
+
+                    receiverThread.start();
+                    if(!secondarySerIP.equals("") ) {
+                        SecondaryServerUpdater updater = new SecondaryServerUpdater(secondarySerIP, port1);
+                        updater.start();
+                    }
+                }
+                //caso in cui non nessuno dei due e quindo sono nella modalità di funzionamento a serverManager singolo
+                else{
+
+                }
+
 
                 //serM.selShared_dir(System.getProperty("user.home") + "/shDir");
                 //connetto il serverManger ai vari dataServer specificati

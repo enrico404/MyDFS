@@ -20,6 +20,8 @@ public interface ServerManagerInterface extends Remote {
     ArrayList<MyFileType> ls_func(String path) throws RemoteException;
     ArrayList<MyFileType> ls_func(String path, boolean dirCapacity) throws RemoteException;
     String getSharedDir() throws RemoteException;
+    String getName() throws RemoteException;
+    void setName(String name) throws RemoteException;
     ArrayList<SlaveServerCache> getSlaveServerCaches() throws RemoteException;
     ArrayList<ServerInterface> getSlaveServers() throws RemoteException;
     boolean selShared_dir(String path) throws RemoteException;

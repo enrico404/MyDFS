@@ -7,4 +7,11 @@ if [ $# -eq 0 ]
     echo "È necessario inserire l'ip del serverManager!"
     exit
 fi
-java Client.ClientClass //$1/ServerManager
+
+STR=""
+for (( i=1; i<=$#; i++ ))
+do
+  STR+="//$i/ServerManager "
+done
+
+java Client.ClientClass $STR
