@@ -13,36 +13,40 @@ public class SecondaryServerUpdater extends Thread {
     private String secondaryServerIP;
     private int port;
 
+
     public SecondaryServerUpdater(String ip, int Port) {
         secondaryServerIP = ip;
         port = Port;
     }
 
     public void run() {
-        try {
-            FileClient fc;
-            String fileSystemTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
+
+        FileClient fc;
+        String fileSystemTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
 
 
-            while (true) {
+        while (true) {
+            try {
 
+                this.sleep(750);
                 File f = new File(fileSystemTreePath);
                 if (f.exists()) {
-                    System.out.println("prova");
+
                     fc = new FileClient(port, secondaryServerIP);
-                    fc.send(fileSystemTreePath, true, f.length());
+                    fc.send(fileSystemTreePath, false, f.length());
+
 
                 }
 
-                Thread.sleep(1000);
+
+            } catch (InterruptedException e) {
+
+            } catch (IOException e) {
+
             }
-
-
-        } catch (InterruptedException e) {
-
-        } catch (IOException e) {
-
         }
+
+
     }
 }
 

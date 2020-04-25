@@ -10,6 +10,7 @@ import java.net.SocketException;
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import utils.FileClient;
@@ -74,6 +75,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      */
     private Tree fileSystemTree = null;
 
+    private String primarySerIp = "";
+
+    private String secondarySerIp = "";
+
 
     /**
      * Costruttore con parametri del nodeManager
@@ -130,6 +135,40 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     }
 
+    public String getPrimarySerIp() {
+        return primarySerIp;
+    }
+
+
+    public String getSecondarySerIp() {
+        return secondarySerIp;
+    }
+
+
+    public void setReplicationVariables(String primIP, String secIP) {
+        this.primarySerIp = primIP;
+        this.secondarySerIp = secIP;
+    }
+
+    private void reloadFileSystemTree(){
+        FileInputStream f = null;
+        ObjectInputStream in = null;
+        try {
+            f = new FileInputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree");
+            in = new ObjectInputStream(f);
+            fileSystemTree = (Tree) in.readObject();
+//            System.out.println("File system tree ricaricato");
+//            fileSystemTree.trasverseTree();
+
+        } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Getter del nome del serverManager
      *
@@ -176,6 +215,13 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
 //                System.out.println("slave: "+ slave.getName());
 //                System.out.println(slave.getFileSystemTree().getDirs());
+
+//                System.out.println("Slave:");
+//                System.out.println(slave.getFileSystemTree().getDirs());
+//                System.out.println("ServerManager:");
+//                System.out.println(fileSystemTree.getDirs());
+
+                System.out.println("");
                 if (!fileSystemTree.checkTree(slave.getFileSystemTree())) {
                     System.out.println("Il server: " + slave.getName() + " non è stato rilevato consistente");
                     System.out.println(slave.getFileSystemTree().getDirs());
@@ -194,13 +240,15 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
 
     /**
-     * Funzione interna per la connessione del ServerManager ai vari nodi slave
+     * Funzione interna per la connessione del ServerManager ai vari nodi slave. Chiamato solo in fase di accensione del
+     * ServerManager
      *
      * @throws RemoteException
      * @throws NotBoundException
      * @throws MalformedURLException
      */
     private boolean connectToDataServers() throws IOException, NotBoundException {
+
         int i = 0;
         for (String ip : ipArray) {
             try {
@@ -224,6 +272,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             }
 
         }
+
+        reloadFileSystemTree();
 
         if (fileSystemTree != null) {
             System.out.println("Il file system tree è il seguente: ");
@@ -806,7 +856,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             fileSystemTree.init();
         }
 
-        FileOutputStream fout = new FileOutputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree");
+        String fTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
+        FileOutputStream fout = new FileOutputStream(fTreePath);
         ObjectOutputStream out = new ObjectOutputStream(fout);
         if (!delete)
             fileSystemTree.insert(path, utils.getFileName(path));
@@ -815,6 +866,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         out.writeObject(fileSystemTree);
         out.close();
         fout.close();
+
+
+
 
     }
 
@@ -836,12 +890,14 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             fileSystemTree.init();
         }
 
-        FileOutputStream fout = new FileOutputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree");
+        String fTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
+        FileOutputStream fout = new FileOutputStream(fTreePath);
         ObjectOutputStream out = new ObjectOutputStream(fout);
         fileSystemTree.move(path1, path2);
         out.writeObject(fileSystemTree);
         out.close();
         fout.close();
+
 
     }
 
@@ -1063,31 +1119,38 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
                 int port1 = 6660;
 
+
                 //se primarySerIP ha al suo interno un valore, vuol dire che sono il server secondario
                 // e devo aggiornare il fileSystemTree in base al primario.
                 //se secondarySerIP ha al suo interno un valore, vuol dire che sono il server primario
                 //e devo tenere aggiornato il fileSystemTree secondario.
                 //Lancio un thread che aggiorna ogni 5 secondi i dati del server secondario
+
                 if (!secondarySerIP.equals("") || !primarySerIP.equals("")) {
 
-
-
+                    serM.setReplicationVariables(primarySerIP, secondarySerIP);
                     //faccio partire il server ricevente per il filesystem del primario
                     String fileSystemTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
-                    //size casuale, tanto non viene utilizzata
-                    FileServerThread receiverThread = new FileServerThread(port1, fileSystemTreePath, true, 100);
-                    receiverThread.start();
 
-                    System.out.println("sec: "+secondarySerIP+" prim: "+primarySerIP);
-                    if(!secondarySerIP.equals("")) {
-                        System.out.println("lancio client sul secondario");
-                        SecondaryServerUpdater updater = new SecondaryServerUpdater(secondarySerIP, port1);
+                    //System.out.println("sec: " + secondarySerIP + " prim: " + primarySerIP);
+
+
+                    if (!serM.getSecondarySerIp().equals("")) {
+                        FileServerThread receiverThread = new FileServerThread(port1, fileSystemTreePath, false, 100);
+                        receiverThread.start();
+                        //ho un secondario settato
+                        SecondaryServerUpdater updater = new SecondaryServerUpdater(serM.getSecondarySerIp(), port1);
                         updater.start();
+
                     }
-                    else if (!primarySerIP.equals("")) {
-                        System.out.println("lancio client sul primario");
-                        SecondaryServerUpdater updater = new SecondaryServerUpdater(primarySerIP, port1);
+
+                    if (!serM.getPrimarySerIp().equals("")) {
+                        FileServerThread receiverThread = new FileServerThread(port1, fileSystemTreePath, false, 100);
+                        receiverThread.start();
+                        SecondaryServerUpdater updater = new SecondaryServerUpdater(serM.getPrimarySerIp(), port1);
                         updater.start();
+
+
                     }
 
 
@@ -1101,7 +1164,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     System.out.println(ip);
                 }
 
-             
+                //aspetto 1 secondo, in questo modo i due serverManager in caso di riconnessione si aggiornano tra di loro
+                //e ho i due file consistenti
+                Thread.sleep(1000);
                 //serM.selShared_dir(System.getProperty("user.home") + "/shDir");
                 //connetto il serverManger ai vari dataServer specificati
                 if (!serM.connectToDataServers()) {

@@ -3,6 +3,8 @@ package Server;
 import javax.management.NotificationEmitter;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
+
 import utils.utils;
 
 
@@ -131,10 +133,27 @@ public class Tree implements Serializable {
     }
 
 
+    /**
+     * Metodo per controllare se due alberi sono uguali tra loro. Utilizzo il formato array per semplificare il confronto.
+     * Vado a contare gli elementi uguali. Se il numero di elementi uguali è pari alla dimensione di entrambi gli array,
+     * allora è possibile stabilire che gli array sono uguali.
+     * @param fileSystemTree
+     * @return
+     */
     public boolean checkTree(Tree fileSystemTree){
         ArrayList<String> dirsExt = fileSystemTree.getDirs();
-        if(dirs.equals(dirsExt))
+        int equalsEl = 0;
+        for(int i=0; i<fileSystemTree.getDirs().size(); i++){
+            for(int j=0; j<dirsExt.size(); j++){
+                if(fileSystemTree.getDirs().get(i).equals(dirsExt.get(j))){
+                    equalsEl ++;
+                }
+            }
+        }
+
+        if(equalsEl == fileSystemTree.getDirs().size() && equalsEl == dirsExt.size()){
             return true;
+        }
         else
             return false;
 

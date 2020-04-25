@@ -45,4 +45,6 @@ public interface ServerManagerInterface extends Remote {
     void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException;
     void asyncServersChecking() throws RemoteException;
     boolean consistency_check() throws IOException;
+    void setReplicationVariables(String primIP, String secIP) throws RemoteException;
+    String getSecondarySerIp() throws RemoteException;
 }
