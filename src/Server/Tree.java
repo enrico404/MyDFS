@@ -36,14 +36,15 @@ public class Tree implements Serializable {
     public void insert(String Path, String Name){
         Node newNode = new Node(Path, Name);
         //System.out.println("prima del find, sto cercando "+ Path+" "+ utils.pathWithoutLast(Path));
-
-        Node parent = find(root, utils.pathWithoutLast(Path));
-        //System.out.println("Dopo find, parent: "+parent.path);
-        if(parent != null) {
-            if (!utils.contains(parent.childs, newNode)) {
-                parent.childs.add(newNode);
-                dirs.add(Path);
-                // System.out.println("inserito nell'albero: " + Name + " percorso: " + Path);
+        if(!utils.contains(dirs, Path)) {
+            Node parent = find(root, utils.pathWithoutLast(Path));
+            //System.out.println("Dopo find, parent: "+parent.path);
+            if (parent != null) {
+                if (!utils.contains(parent.childs, newNode)) {
+                    parent.childs.add(newNode);
+                    dirs.add(Path);
+                    // System.out.println("inserito nell'albero: " + Name + " percorso: " + Path);
+                }
             }
         }
     }
@@ -165,6 +166,7 @@ public class Tree implements Serializable {
 
     public void move(String path1, String path2){
         Node parent_node2 = find(root, utils.pathWithoutLast(path2));
+
 //        System.out.println("path1: "+path1+" path2: "+path2);
 //        System.out.println("Nodi: node1 "+node1.path+ " parent_node2: "+parent_node2.path);
         Node parent_node1 = find(root, utils.pathWithoutLast(path1));
@@ -204,7 +206,10 @@ public class Tree implements Serializable {
     }
 
     private void correct_path(Node node, String path){
-        path += "/"+node.dirName;
+        if(path.equals("/")){
+            path ="/"+ node.dirName;
+        }else
+            path += "/"+node.dirName;
         //System.out.println("setto il percorso: "+path);
         node.path = path;
         for(Node child: node.childs){

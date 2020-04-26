@@ -60,6 +60,7 @@ public class FileClient {
             float elapsedTime = 0;
             long after = 0;
             long bufferDim = 4096;
+            //System.out.println("Mando file");
             while ((read = inChannel.transferTo(total, bufferDim, sock)) > 0) {
                 //buffer.flip();
                 //sock.write(buffer);

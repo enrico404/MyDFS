@@ -989,7 +989,7 @@ public class ClientClass implements Serializable {
 
         } catch (Exception e) {
            utils.error_printer("Errore nella comunicazione con il server manager");
-
+            e.printStackTrace();
         }
 
 

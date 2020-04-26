@@ -586,8 +586,12 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public boolean mkdir(String path) throws IOException {
         File f = new File(path);
         String relativePath = path.substring(sharedDir.length());
-        updateFileSystemTree(relativePath, false);
-        if (f.mkdir()) return true;
+        if(!f.exists()) {
+            if (f.mkdir()) {
+                updateFileSystemTree(relativePath, false);
+                return true;
+            }
+        }
         return false;
     }
 

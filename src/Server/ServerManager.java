@@ -639,7 +639,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             int slaveIndex = freerNodeChooser();
             // recupero il reference al nodo slave
             ServerInterface slave = getSlaveNode(slaveIndex);
-            //System.out.println("nodo scelto: "+ slave.getName());
+            System.out.println("nodo scelto: "+ slave.getName());
 
             //se è un trasferimento di file interno al file system remoto
             if (checkExists(localPath)) {
@@ -649,7 +649,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 //System.out.println("locazione: "+loc);
                 ServerInterface ClSlave = getSlaveNode(loc);
                 String realLocalPath = ClSlave.getSharedDir() + localPath;
-                //  System.out.println("localpath: "+realLocalPath+" remote: "+realRemotePath);
+                //System.out.println("localpath: "+realLocalPath+" remote: "+realRemotePath);
                 ClSlave.startFileClient(port, slave.getIp(), realLocalPath);
                 return true;
 
@@ -671,16 +671,15 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         for (ServerInterface slave : getSlaveServers()) {
             String realClientPath = slave.getSharedDir() + clientPath;
             String realServerPath;
-//            System.out.println("real client path : "+realClientPath);
+            System.out.println("real client path : "+realClientPath);
             if (slave.isDirectory(realClientPath) && slave.checkExists(realClientPath)) {
                 String[] param = new String[1];
                 param[0] = serverPath;
-                //System.out.println("Creo directory : "+serverPath);
                 //ser.mkdir(param, this.getCurrentPath());
                 realServerPath = slave.getSharedDir() + serverPath;
-//                System.out.println("Creo directory : "+realServerPath);
-                updateFileSystemTree(serverPath, false);
-                slave.mkdir(realServerPath);
+                System.out.println("Creo directory : "+realServerPath);
+                if(slave.mkdir(realServerPath))
+                    updateFileSystemTree(serverPath, false);
                 for (File sub : slave.listFiles(realClientPath)) {
                     String newClientPath = clientPath + '/' + sub.getName();
                     String newSerPath = serverPath + '/' + sub.getName();
@@ -791,11 +790,17 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             //si recupera il nodo slave e si cmabia il percorso dei file/directory
             // es : s1 -> s1
             String fileName = utils.getFileName(path1);
-            path2 += "/" + fileName;
+            if(path2.equals("/")){
+                path2 += fileName;
+            }
+            else
+                path2 += "/" + fileName;
             if (path1 != path2) {
                 ServerInterface slave = getSlaveNode(loc1);
                 realPath1 = slave.getSharedDir() + path1;
                 realPath2 = slave.getSharedDir() + path2;
+//                System.out.println("path1: "+path1);
+//                System.out.println("path2: "+path2);
                 //aggiorno fileSystemTree di serverManager e slave
                 updateFileSystemTree_move(path1, path2);
                 slave.updateFileSystemTree_move(path1, path2);
@@ -806,7 +811,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         } else if (f1.getType().equals("Dir") && f2.getType().equals("Dir")) {
 
             String fileName = utils.getFileName(path1);
-            path2 += "/" + fileName;
+            if(path2.equals("/")){
+                path2 += fileName;
+            }
+            else
+                path2 += "/" + fileName;
+
             //la copia ricorsiva non è più necessaria, devo solo cambiare i nomi come nel
             //caso precendente
             //System.out.println("Inizio la copia ricorsiva di "+f1.getName());
@@ -815,7 +825,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 realPath1 = slave.getSharedDir() + path1;
                 realPath2 = slave.getSharedDir() + path2;
                 if (path1 != path2) {
-                    //aggiorno fileSystemTree di serverManager e slave
+                    //aggiorno fileSystemTree di serverManager e slave.
+//                    System.out.println("path1: "+path1);
+//                    System.out.println("path2: "+path2);
                     updateFileSystemTree_move(path1, path2);
                     slave.updateFileSystemTree_move(path1, path2);
 
@@ -909,8 +921,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         out.close();
         fout.close();
 
-        System.out.println("File system modificato in : ");
-        fileSystemTree.trasverseTree();
+//        System.out.println("File system modificato in : ");
+//        fileSystemTree.trasverseTree();
     }
 
 
@@ -947,9 +959,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //                ServerInterface slave = getSlaveNode(loc);
                 for (ServerInterface slave : slaveServers) {
                     realPath = slave.getSharedDir() + param[i];
-                    if(slave.mkdir(realPath))
-                        updateFileSystemTree(currentPath + "/" + param[i], false);
+                    slave.mkdir(realPath);
                 }
+                updateFileSystemTree(currentPath + "/" + param[i], false);
             } else {
                 //caso in cui scrivo solo il nome della cartella
                 for (ServerInterface slave : slaveServers) {
@@ -957,10 +969,11 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     if (slave.checkExists(realPath)) {
                         realPath = realPath + "/" + param[i];
                         //System.out.println(currentPath+ "/" + param[i]);
-                        if(slave.mkdir(realPath))
-                            updateFileSystemTree(currentPath + "/" + param[i], false);
+                        slave.mkdir(realPath);
+
                     }
                 }
+                updateFileSystemTree(currentPath + "/" + param[i], false);
             }
         }
 
