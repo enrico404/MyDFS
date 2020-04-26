@@ -143,15 +143,18 @@ public class Tree implements Serializable {
     public boolean checkTree(Tree fileSystemTree){
         ArrayList<String> dirsExt = fileSystemTree.getDirs();
         int equalsEl = 0;
-        for(int i=0; i<fileSystemTree.getDirs().size(); i++){
+        for(int i=0; i<this.getDirs().size(); i++){
             for(int j=0; j<dirsExt.size(); j++){
-                if(fileSystemTree.getDirs().get(i).equals(dirsExt.get(j))){
+                if(this.getDirs().get(i).equals(dirsExt.get(j))){
                     equalsEl ++;
                 }
             }
         }
 
-        if(equalsEl == fileSystemTree.getDirs().size() && equalsEl == dirsExt.size()){
+//        System.out.println("Eq:"+equalsEl);
+//        System.out.println("serM size: "+this.getDirs().size());
+//        System.out.println("Slave size: "+dirsExt.size());
+        if(equalsEl == this.getDirs().size() && equalsEl == dirsExt.size()){
             return true;
         }
         else

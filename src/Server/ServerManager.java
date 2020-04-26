@@ -79,6 +79,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     private String secondarySerIp = "";
 
+    public ServerManagerInterface backupServer;
+
 
     /**
      * Costruttore con parametri del nodeManager
@@ -101,7 +103,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             fileSystemTree = (Tree) in.readObject();
 
 
-        } catch (FileNotFoundException e) {
+        } catch (EOFException |FileNotFoundException e) {
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -135,22 +137,39 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     }
 
-    public String getPrimarySerIp() {
+    public ServerManagerInterface getBackupServer() {
+        return backupServer;
+    }
+
+    public void setBackupServer(ServerManagerInterface backupServer) {
+        this.backupServer = backupServer;
+    }
+
+    public Tree getFileSystemTree() throws RemoteException{
+        return fileSystemTree;
+    }
+
+    public void setFileSystemTree(Tree fileSystemTree) throws RemoteException{
+        this.fileSystemTree = fileSystemTree;
+    }
+
+    public String getPrimarySerIp() throws RemoteException{
         return primarySerIp;
     }
 
+    public void setPrimarySerIp(String primarySerIp) throws RemoteException{
+        this.primarySerIp = primarySerIp;
+    }
 
-    public String getSecondarySerIp() {
+    public String getSecondarySerIp() throws RemoteException{
         return secondarySerIp;
     }
 
-
-    public void setReplicationVariables(String primIP, String secIP) {
-        this.primarySerIp = primIP;
-        this.secondarySerIp = secIP;
+    public void setSecondarySerIp(String secondarySerIp) throws RemoteException {
+        this.secondarySerIp = secondarySerIp;
     }
 
-    private void reloadFileSystemTree(){
+    public void reloadFileSystemTree() throws RemoteException{
         FileInputStream f = null;
         ObjectInputStream in = null;
         try {
@@ -160,7 +179,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //            System.out.println("File system tree ricaricato");
 //            fileSystemTree.trasverseTree();
 
-        } catch (FileNotFoundException e) {
+        } catch (EOFException |FileNotFoundException e) {
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -220,8 +239,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //                System.out.println(slave.getFileSystemTree().getDirs());
 //                System.out.println("ServerManager:");
 //                System.out.println(fileSystemTree.getDirs());
-
-                System.out.println("");
+//                System.out.println(fileSystemTree.getDirs().size());
+               // System.out.println("");
                 if (!fileSystemTree.checkTree(slave.getFileSystemTree())) {
                     System.out.println("Il server: " + slave.getName() + " non è stato rilevato consistente");
                     System.out.println(slave.getFileSystemTree().getDirs());
@@ -275,10 +294,29 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
         reloadFileSystemTree();
 
+        try {
+
+            getBackupServer().reloadFileSystemTree();
+            System.out.println("Secondario:");
+            System.out.println(getBackupServer().getFileSystemTree().getDirs());
+            System.out.println("Primario");
+            System.out.println(fileSystemTree.getDirs());
+            //se sono diversi il file system tree secondario diventa il primario
+            if(!fileSystemTree.checkTree(getBackupServer().getFileSystemTree())){
+                fileSystemTree = getBackupServer().getFileSystemTree();
+                fileSystemTree.updateDir();
+                saveFileSystemTree();
+
+
+            }
+        }catch (Exception e){}
+
         if (fileSystemTree != null) {
             System.out.println("Il file system tree è il seguente: ");
             fileSystemTree.trasverseTree();
         }
+        System.out.println("file system tree dirs:");
+        System.out.println(fileSystemTree.getDirs());
         System.out.println("Slave servers a cui sono connesso:");
         for (ServerInterface slave : slaveServers) {
             System.out.println(slave.getName());
@@ -787,49 +825,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
 
         }
-//        if (loc1.equals(loc2)){
-//            //il file deve essere spostato di locazione, ma la destinazione è sullo stesso nodo
-//            // es : s1 -> s1
-//            String fileName = utils.getFileName(path1);
-//            path2 += "/"+fileName;
-//            if(path1 != path2) {
-//                ServerInterface slave = getSlaveNode(loc1);
-//                slave.move(path1, path2);
-//            }
-//        else {
-//            // il file deve essere spostato di locazione, ma la destinazione è su due nodi diversi
-//            // es : s1 -> s2
-//            ServerInterface slave1 = getSlaveNode(loc1);
-//            ServerInterface slave2 = getSlaveNode(loc2);
-//
-//            if(slave1.isDirectory(path1) && slave2.isDirectory(path2)){
-//                File f = new File(path1);
-//                if(f.exists()){
-//                    String fileName = utils.getFileName(path1);
-//                    path2 += "/"+fileName;
-//                    System.out.println("Inizio la copia ricorsiva di "+f.getName());
-//                    recursiveCopy(f, slave2, path1, path2);
-//
-//                }
-//                ArrayList<String> paths = new ArrayList<String>();
-//                //recupero i percorsi dei vari file
-//                paths.add(utils.getFileName(path1));
-//                //cancello ricorsivamente le vecchia directory
-//                client.rm_func_rec(this, paths);
-//
-//
-//
-//            }
-//            else if(!(slave1.isDirectory(path1)) && slave2.isDirectory(path2)){
-//                String fileName = utils.getFileName(path1);
-//                path2 += "/"+fileName;
-//                //spostamento di file in una directory
-//
-//                cp_func_slave(slave2, path1, path2);
-//                slave1.rm_func(path1);
-//
-//            }
-        //casi impossibili da gestire: file -> file e  dir -> file
+
         else {
             System.err.println("Errore nella sintassi del comando");
             return false;
@@ -868,7 +864,22 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         fout.close();
 
 
+    }
 
+    @Override
+    public void saveFileSystemTree() throws IOException, RemoteException{
+        if (fileSystemTree == null) {
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+
+        String fTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
+        FileOutputStream fout = new FileOutputStream(fTreePath);
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+        out.writeObject(fileSystemTree);
+        out.close();
+        fout.close();
 
     }
 
@@ -898,7 +909,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         out.close();
         fout.close();
 
-
+        System.out.println("File system modificato in : ");
+        fileSystemTree.trasverseTree();
     }
 
 
@@ -1128,45 +1140,49 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
                 if (!secondarySerIP.equals("") || !primarySerIP.equals("")) {
 
-                    serM.setReplicationVariables(primarySerIP, secondarySerIP);
-                    //faccio partire il server ricevente per il filesystem del primario
+
                     String fileSystemTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
 
-                    //System.out.println("sec: " + secondarySerIP + " prim: " + primarySerIP);
 
+                    //logica nuova: il primario manda periodicamente al secondario se è attivo, quando il primario crasha
+                    // e il secondario si attiva, all'avvio recupero il file dal secondario, se sono diversi uso il secondario
 
-                    if (!serM.getSecondarySerIp().equals("")) {
-                        FileServerThread receiverThread = new FileServerThread(port1, fileSystemTreePath, false, 100);
-                        receiverThread.start();
+                    if (!secondarySerIP.equals("")) {
+//                        FileServerThread receiverThread = new FileServerThread(port1, fileSystemTreePath, false, 100);
+//                        receiverThread.start();
                         //ho un secondario settato
-                        SecondaryServerUpdater updater = new SecondaryServerUpdater(serM.getSecondarySerIp(), port1);
+
+                        String backupServerIp = "//"+secondarySerIP+"/ServerManager";
+                        ServerManagerInterface backupServer =  (ServerManagerInterface) Naming.lookup(backupServerIp);
+
+                        serM.setBackupServer(backupServer);
+
+                        SecondaryServerUpdater updater = new SecondaryServerUpdater(secondarySerIP, port1);
                         updater.start();
 
                     }
 
-                    if (!serM.getPrimarySerIp().equals("")) {
+                    if (!primarySerIP.equals("")) {
                         FileServerThread receiverThread = new FileServerThread(port1, fileSystemTreePath, false, 100);
                         receiverThread.start();
-                        SecondaryServerUpdater updater = new SecondaryServerUpdater(serM.getPrimarySerIp(), port1);
-                        updater.start();
-
+//                        SecondaryServerUpdater updater = new SecondaryServerUpdater(primarySerIP, port1);
+//                        updater.start();
 
                     }
 
 
                 }
                 //caso in cui non nessuno dei due e quindo sono nella modalità di funzionamento a serverManager singolo
-                else {
-
-                }
+                //non c'è da fare niente
+                else { }
 
                 for (String ip : ipArr) {
                     System.out.println(ip);
                 }
 
-                //aspetto 1 secondo, in questo modo i due serverManager in caso di riconnessione si aggiornano tra di loro
-                //e ho i due file consistenti
-                Thread.sleep(1000);
+
+                if (!primarySerIP.equals(""))
+                    Thread.sleep(1000);
                 //serM.selShared_dir(System.getProperty("user.home") + "/shDir");
                 //connetto il serverManger ai vari dataServer specificati
                 if (!serM.connectToDataServers()) {

@@ -165,6 +165,14 @@ public class utils {
         System.err.println(ConsoleColors.RED+error+ConsoleColors.RESET);
     }
 
+    /**
+     * Metodo per la stampa a console di messaggi di successo, la stampa è colorata di verde
+     * @param message stringa contenente il messaggio
+     */
+    public static void success_printer(String message){
+
+        System.out.println(ConsoleColors.GREEN_BOLD+message+ConsoleColors.RESET);
+    }
 
     /**
      * Metodo per ottenere il percorso senza l'ultimo file/directory

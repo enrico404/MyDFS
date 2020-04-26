@@ -62,17 +62,32 @@ public class ClientClass implements Serializable {
      */
     private ServerManagerInterface ser;
 
+    /**
+     * Riferimento al server di backup
+     */
+    private ServerManagerInterface backupSer;
 
     /**
      * Costruttore per la classe client
      *
-     * @param ser nodeManager del cluster
+     * @param serversArray array di server manager
      */
-    public ClientClass(ServerManagerInterface ser) throws RemoteException {
+    public ClientClass(ArrayList<ServerManagerInterface> serversArray) throws RemoteException {
         super();
         currentPath = "";
         basePath = currentPath;
-        this.ser = ser;
+
+        if(serversArray.size() == 2){
+            //ho il server di backup
+            this.ser = serversArray.get(0);
+            this.backupSer = serversArray.get(1);
+
+        }
+        else{
+            //ho solo un serverManager
+            this.ser = serversArray.get(0);
+            this.backupSer = null;
+        }
 
     }
 
@@ -90,6 +105,22 @@ public class ClientClass implements Serializable {
      */
     public void setSer(ServerManagerInterface ser) {
         this.ser = ser;
+    }
+
+    /**
+     * Getter del riferimento al backup server
+     * @return
+     */
+    public ServerManagerInterface getBackupSer() {
+        return backupSer;
+    }
+
+    /**
+     * Setter del riferimento al backup server
+     * @param backupSer
+     */
+    public void setBackupSer(ServerManagerInterface backupSer) {
+        this.backupSer = backupSer;
     }
 
     /**
@@ -669,28 +700,30 @@ public class ClientClass implements Serializable {
 
         try {
             ServerManagerInterface ser = null;
+            ServerManagerInterface backupSer = null;
+            ArrayList<ServerManagerInterface> serverManagers = new ArrayList<>();
             for (int i = 0; i < args.length; i++) {
                 String serverAdd = args[i];
                 try {
                     ser = (ServerManagerInterface) Naming.lookup(serverAdd);
                     ser.getIp();
-                    //esco se non genera eccezzioni perchè ho trovato un serverManager valido
-                    i = args.length;
+                    //se non genera eccezzioni lo aggiungo all'array di server Managers
+                    serverManagers.add(ser);
                 } catch (Exception e) {}
 
             }
-            if (ser == null) {
+            if (serverManagers.size() == 0) {
                 utils.error_printer("Non è stato trovato un server manager valido!");
                 return;
             }
             ClientClass client = null;
             try {
-                client = new ClientClass(ser);
+                client = new ClientClass(serverManagers);
             }catch (Exception e){utils.error_printer("Errore nella connessione con il serverManager");}
             System.out.println(ConsoleColors.GREEN_BOLD + "Connesso al cluster correttamente!" + ConsoleColors.RESET);
             System.out.println("ServerManager ip: "+ client.getSer().getIp());
             //creo un thread che controlla che il client sia connesso almeno ad un data node
-            ServersConnectedChecker serverStatusChecker = new ServersConnectedChecker(ser);
+            ServersConnectedChecker serverStatusChecker = new ServersConnectedChecker(client);
             serverStatusChecker.start();
 
             boolean exit = false;
@@ -708,28 +741,28 @@ public class ClientClass implements Serializable {
                     String ins = in.nextLine();
 
 
-                    if (ins.startsWith("ls")) {
-
-                        if (ParamParser.checkParam(ins, "-l")) {
-                            client.ls_func(ser, false, true, false);
+                    if (ins.startsWith("ls") || ins.startsWith("ll")) {
+                        //ll è un alias ad ls -l
+                        if (ParamParser.checkParam(ins, "-l") || ins.startsWith("ll")) {
+                            client.ls_func(client.getSer(), false, true, false);
                         } else if (ParamParser.checkParam(ins, "-d")) {
-                            client.ls_func(ser, true, false, false);
+                            client.ls_func(client.getSer(), true, false, false);
                         }
                         //nel caso a un parametro il -h è inutile a causa del comporamento di default
 
                         else if (ParamParser.checkParam(ins, "-ld"))
-                            client.ls_func(ser, true, true, false);
+                            client.ls_func(client.getSer(), true, true, false);
 
                         else if (ParamParser.checkParam(ins, "-lh"))
-                            client.ls_func(ser, false, true, true);
+                            client.ls_func(client.getSer(), false, true, true);
 
                             //se sbaglio ad inserire un opzione il comando non viene lanciato
                         else if (ParamParser.checkParam(ins, "-ldh"))
-                            client.ls_func(ser, true, true, true);
+                            client.ls_func(client.getSer(), true, true, true);
 
                         else {
                             //comportamento di default senza parametri
-                            client.ls_func(ser, false, false, false);
+                            client.ls_func(client.getSer(), false, false, false);
                         }
 
                     } else if (ins.startsWith("help")) {
@@ -741,7 +774,7 @@ public class ClientClass implements Serializable {
 //                        System.out.println(param[i]);
 //                    }
                         String path = param[1];
-                        if (!(client.cd_func(ser, path))) {
+                        if (!(client.cd_func(client.getSer(), path))) {
                             utils.error_printer("La directory \"" + path + "\" non esiste!");
                         }
                     } else if (ins.startsWith("rm")) {
@@ -753,7 +786,7 @@ public class ClientClass implements Serializable {
                                 paths.add(param[i]);
                             }
 
-                            if (!(client.rm_func(ser, paths))) {
+                            if (!(client.rm_func(client.getSer(), paths))) {
                                 utils.error_printer("Uno dei file \"" + paths + "\" non esiste oppure è una directory!" +
                                         "\n (Per cancellare le directory usa l'opzione -rf )");
 
@@ -771,7 +804,7 @@ public class ClientClass implements Serializable {
                                     paths.add(param[i]);
                                 }
 
-                                if (!(client.rm_func_rec(ser, paths))) {
+                                if (!(client.rm_func_rec(client.getSer(), paths))) {
                                     utils.error_printer("Errore nella cancellazione");
 
                                 }
@@ -790,11 +823,11 @@ public class ClientClass implements Serializable {
                                 param[i] = utils.cleanString(param[i], client);
 
                                 param[param.length - 1] = utils.cleanString(param[param.length - 1], client);
-                                param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser);
+                                param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], client.getSer());
                                 // System.out.println("passo i parametri :"+param[1]+" "+ param[2]);
 
                                 //controllo esistenza del file all'interno della funzione
-                                if (!(client.cp_func(ser, param[i], param[param.length - 1]))) {
+                                if (!(client.cp_func(client.getSer(), param[i], param[param.length - 1]))) {
                                     utils.error_printer("Errore nella copia del file!");
                                 }
                                 System.err.println("");
@@ -810,12 +843,12 @@ public class ClientClass implements Serializable {
                                 param[param.length - 1] = utils.cleanString(param[param.length - 1], client);
 
                                 if (ParamParser.checkParam(ins, "-m"))
-                                    param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser) + "/" + utils.getFileName(param[i]);
+                                    param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], client.getSer()) + "/" + utils.getFileName(param[i]);
                                 else
-                                    param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser);
+                                    param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], client.getSer());
 
                                 //il controllo dell'esistenza del file è dentro la funzione, per tutti i casi
-                                if (!(client.cp_func(ser, param[i], param[param.length - 1], ins, true))) {
+                                if (!(client.cp_func(client.getSer(), param[i], param[param.length - 1], ins, true))) {
                                     utils.error_printer("Errore nella copia del file!");
                                 }
                                 System.err.println("");
@@ -838,12 +871,12 @@ public class ClientClass implements Serializable {
 //                                String lastEl = tmp[tmp.length-1];
 //                                String dirName =  lastEl.substring(0, lastEl.length());
 //                                param[4] = param[4]+"/"+dirName;
-                                param[startIndex + 1] = client.genDestPath(param[startIndex], param[startIndex + 1], ser);
+                                param[startIndex + 1] = client.genDestPath(param[startIndex], param[startIndex + 1], client.getSer());
                             }
 
 
                             //controllo esistenza all'interno della funzione
-                            if (!(client.cp_func(ser, param[startIndex], param[startIndex + 1], ins, true))) {
+                            if (!(client.cp_func(client.getSer(), param[startIndex], param[startIndex + 1], ins, true))) {
                                 utils.error_printer("Errore nella copia del file!");
                             }
                             System.err.println("");
@@ -856,11 +889,11 @@ public class ClientClass implements Serializable {
                             for (int i = startIndex; i < param.length - 1; i++) {
                                 param[i] = utils.cleanString(param[i], client);
                                 param[param.length - 1] = utils.cleanString(param[param.length - 1], client);
-                                param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser);
+                                param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], client.getSer());
 
                                 //controllo esistenza all'interno
                                 // if (!(client.cp_func(ser, param[i], param[param.length-1], true))) {
-                                if (!(ser.cp_func(param[i], param[param.length - 1]))) {
+                                if (!(client.getSer().cp_func(param[i], param[param.length - 1]))) {
                                     utils.error_printer("Errore nella copia del file!");
                                 }
                                 System.err.println("");
@@ -879,7 +912,7 @@ public class ClientClass implements Serializable {
                             for (int i = startIndex; i < param.length - 1; i++) {
                                 param[i] = utils.cleanString(param[i], client);
                                 param[param.length - 1] = utils.cleanString(param[param.length - 1], client);
-                                param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], ser);
+                                param[param.length - 1] = client.genDestPath(param[i], param[param.length - 1], client.getSer());
 
 
                                 System.out.println("Inizio la copia ricorsiva di " + param[i]);
@@ -887,8 +920,8 @@ public class ClientClass implements Serializable {
 //                                    System.out.println("source path: "+ param[i]);
 //                                    System.out.println("Dest path: "+ param[param.length-1]);
 
-                                if (ser.checkExists(param[i])) {
-                                    ser.recursiveCopyInt(param[i], param[param.length - 1]);
+                                if (client.getSer().checkExists(param[i])) {
+                                    client.getSer().recursiveCopyInt(param[i], param[param.length - 1]);
                                 } else
                                     utils.error_printer("Errore nella copia della directory, controlla che i percorsi siamo corretti!");
 
@@ -903,7 +936,7 @@ public class ClientClass implements Serializable {
                     } else if (ins.startsWith("mkdir")) {
                         String[] param = ins.split(" ");
 
-                        if (ser.mkdir(param, client.getCurrentPath())) {
+                        if (client.getSer().mkdir(param, client.getCurrentPath())) {
                             System.out.println("Directory creata/e con successo");
                         }
 
@@ -911,8 +944,8 @@ public class ClientClass implements Serializable {
                         String[] param = ins.split(" ");
                         param[1] = utils.cleanString(param[1], client);
                         param[2] = utils.cleanString(param[2], client);
-                        String loc1 = ser.getFileLocation(param[1]);
-                        String loc2 = ser.getFileLocation(param[2]);
+                        String loc1 = client.getSer().getFileLocation(param[1]);
+                        String loc2 = client.getSer().getFileLocation(param[2]);
                         boolean exists = true;
                         if (loc1 == null) {
                             utils.error_printer("Il file/directory " + param[1] + " non esiste! ");
@@ -927,16 +960,16 @@ public class ClientClass implements Serializable {
 //                            System.out.println(param[1]);
 //                            System.out.println(param[2]);
                         if (exists)
-                            ser.move(param[1], param[2], loc1);
+                            client.getSer().move(param[1], param[2], loc1);
 
                     } else if (ins.startsWith("du")) {
-                        client.du_func(ins, ser);
+                        client.du_func(ins, client.getSer());
                     } else if (ins.startsWith("sview")) {
-                        client.sview_func(ins, ser);
+                        client.sview_func(ins, client.getSer());
 
                     } else if (ins.startsWith("open")) {
                         String[] param = ins.split(" ");
-                        if (!(client.open(param, ser, ins))) {
+                        if (!(client.open(param, client.getSer(), ins))) {
                             utils.error_printer("Errore nell'apertura del file \n");
                         }
 

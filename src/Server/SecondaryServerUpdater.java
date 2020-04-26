@@ -28,7 +28,7 @@ public class SecondaryServerUpdater extends Thread {
         while (true) {
             try {
 
-                this.sleep(750);
+                this.sleep(550);
                 File f = new File(fileSystemTreePath);
                 if (f.exists()) {
 

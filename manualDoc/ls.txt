@@ -2,6 +2,7 @@ Resistituisce i file nella directory corrente
 
 Uso:
 	ls [-l, -d, -h]..
+	ll (è l'alias per "ls -l")
 
 Opzioni:
 	-l -> per vedere anche i meta dati dei file

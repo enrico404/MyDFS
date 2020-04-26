@@ -45,6 +45,12 @@ public interface ServerManagerInterface extends Remote {
     void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException;
     void asyncServersChecking() throws RemoteException;
     boolean consistency_check() throws IOException;
-    void setReplicationVariables(String primIP, String secIP) throws RemoteException;
+    Tree getFileSystemTree() throws RemoteException;
+    void setBackupServer(ServerManagerInterface backupServer) throws RemoteException;
+    void setPrimarySerIp(String primarySerIp) throws RemoteException;
+    String getPrimarySerIp() throws RemoteException;
     String getSecondarySerIp() throws RemoteException;
+    void setSecondarySerIp(String secondarySerIp) throws RemoteException;
+    void reloadFileSystemTree() throws RemoteException;
+    void saveFileSystemTree() throws RemoteException, IOException;
 }
