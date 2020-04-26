@@ -27,6 +27,7 @@ public class ReconnecterThread extends Thread {
                 System.out.println("Mi sono riconnesso con: "+serverCache.getName());
                 //se non provoca eccezioni funziona e lo riaggiungo alla lista di slave servers
                 ser.getSlaveServers().add(slave);
+                ser.reloadFileSystemTree();
                 //devo rendere il server consistente
                 ser.consistency_check();
                 //esco dal ciclo perchè mi sono riconnesso correttamente

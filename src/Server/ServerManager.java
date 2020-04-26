@@ -947,8 +947,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //                ServerInterface slave = getSlaveNode(loc);
                 for (ServerInterface slave : slaveServers) {
                     realPath = slave.getSharedDir() + param[i];
-                    updateFileSystemTree(currentPath + "/" + param[i], false);
-                    slave.mkdir(realPath);
+                    if(slave.mkdir(realPath))
+                        updateFileSystemTree(currentPath + "/" + param[i], false);
                 }
             } else {
                 //caso in cui scrivo solo il nome della cartella
@@ -957,8 +957,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     if (slave.checkExists(realPath)) {
                         realPath = realPath + "/" + param[i];
                         //System.out.println(currentPath+ "/" + param[i]);
-                        updateFileSystemTree(currentPath + "/" + param[i], false);
-                        slave.mkdir(realPath);
+                        if(slave.mkdir(realPath))
+                            updateFileSystemTree(currentPath + "/" + param[i], false);
                     }
                 }
             }
@@ -1131,12 +1131,6 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
                 int port1 = 6660;
 
-
-                //se primarySerIP ha al suo interno un valore, vuol dire che sono il server secondario
-                // e devo aggiornare il fileSystemTree in base al primario.
-                //se secondarySerIP ha al suo interno un valore, vuol dire che sono il server primario
-                //e devo tenere aggiornato il fileSystemTree secondario.
-                //Lancio un thread che aggiorna ogni 5 secondi i dati del server secondario
 
                 if (!secondarySerIP.equals("") || !primarySerIP.equals("")) {
 

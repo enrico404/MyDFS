@@ -741,7 +741,7 @@ public class ClientClass implements Serializable {
                     String ins = in.nextLine();
 
 
-                    if (ins.startsWith("ls") || ins.startsWith("ll")) {
+                    if (ins.startsWith("ls") || ins.equals("ll")) {
                         //ll è un alias ad ls -l
                         if (ParamParser.checkParam(ins, "-l") || ins.startsWith("ll")) {
                             client.ls_func(client.getSer(), false, true, false);
@@ -987,11 +987,9 @@ public class ClientClass implements Serializable {
                 client.getFileClient().closeConnection();
 
 
-        } catch (RemoteException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+           utils.error_printer("Errore nella comunicazione con il server manager");
 
-        } catch (MalformedURLException | InterruptedException e) {
-            e.printStackTrace();
         }
 
 

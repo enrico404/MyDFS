@@ -82,7 +82,7 @@ public class ServersConnectedChecker extends Thread {
 
                     }
                 } catch (Exception e2) {
-                    utils.error_printer("Anche il server secondario è fallito!");
+                    utils.error_printer("Fallimento totale del sistema! Contattare immediatamente l'amministratore di sistema! (tutti serverManager falliti)");
                 }
 
 
