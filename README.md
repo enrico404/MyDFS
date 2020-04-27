@@ -20,6 +20,13 @@ Viene tuttavia creata una rete virtuale com'è rappresentata nell'immagine.
 
 NB: il sistema è in grado di gestire più client contemporaneamente
 
+### ServerManager secondario
+
+Il sistema nel suo funzionamento più semplice è resistente a fallimenti solo nei Data Nodes, il serverManager 
+è un single point of failure (SPOF). Per questo è stato introdotto un meccanismo per rendere più resistente questo punto
+debole. In particolare è possibile designare anche un server manager secondario che viene attivato solo se il serverManager 
+primario crasha e assume temporaneamente il ruolo di ServerManager primario, fino a quando quello originale non ripristina il 
+suo funzionamento.
 
 Maggiori informazioni nella [documentazione](./Documentation/index.html)
 
@@ -80,13 +87,25 @@ NB: se il nodo è già avviato come "Data node" saltare i passi 1 e 2
 	1) apri un terminale nella directory "run/serverManager"
 	2) eseguire ./serverManager_init.sh
 	3) apri un altro terminale nella directory "run/serverManager"
-	4) eseguire ./serverManager_run.sh <slave_ip>...
+	4) eseguire ./serverManager_run.sh <slave_ip>... [-s/-p ip_serverManager secondario/primario]
 
 slave_ip deve essere nel formato:  //ip_slave/server_name
 
 NB: i nomi dei server devono essere differenti l'uno dall'altro, un uso scorretto potrebbe compromettere il funzionamento del software
 
+#### ServerManager secondario
 
+Configurazione dei serverManager nel caso si voglia usare anche il serverManager secondario di backup
+
+##### ServerManager primario
+
+    1) apri un altro terminale nella directory "run/serverManager"
+    2) eseguire ./serverManager_run.sh <slave_ip>... [-s ip_serverManager secondario]
+    
+##### ServerManager secondario
+
+    1) apri un altro terminale nella directory "run/serverManager"
+    2) eseguire ./serverManager_run.sh <slave_ip>... [-p ip_serverManager primario]
 
 ### Client
 

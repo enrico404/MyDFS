@@ -6,11 +6,27 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.*;
 
+/**
+ * Thread specifico che si occupa di provare a ristabilire ogni secondo la connessione con il data nodes crashato.
+ * Se ci riesce e il nodo torna online, ne viene controllata la consistenza del file system, se è rimasto indietro
+ * viene aggiornato secondo il file system del servber Manager
+ */
 public class ReconnecterThread extends Thread {
 
+    /**
+     * dati del server crashato: ip e nome
+     */
     private SlaveServerCache serverCache;
+    /**
+     * riferimento al server manager
+     */
     private ServerManagerInterface ser;
 
+    /**
+     * Costruttore con parametri della classe
+     * @param ServerCache cache del server crashato
+     * @param Ser riferimento al server manager
+     */
     public ReconnecterThread(SlaveServerCache ServerCache, ServerManagerInterface Ser) {
         serverCache = ServerCache;
         ser = Ser;

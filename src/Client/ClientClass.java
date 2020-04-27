@@ -67,6 +67,7 @@ public class ClientClass implements Serializable {
      */
     private ServerManagerInterface backupSer;
 
+
     /**
      * Costruttore per la classe client
      *

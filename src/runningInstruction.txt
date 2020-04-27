@@ -26,7 +26,7 @@ serverManager:
 	- avvia rmregistry se non è già stato avviato nell'host
 	- apri un terminale in out ed esegui:
 
-	java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>... [-s/-p ip_serverManager primario/secondario]
+	java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>... [-s/-p ip_serverManager secondario/primario]
 
     opzioni:
         -   -s: indica il serverManager secondario a cui fare riferimento

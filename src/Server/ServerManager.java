@@ -137,38 +137,81 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     }
 
+    /**
+     * Getter del riferimento al server di backup
+     * @return
+     */
     public ServerManagerInterface getBackupServer() {
         return backupServer;
     }
 
+    /**
+     * Setter del riferimento al server di backup
+     * @param backupServer
+     */
     public void setBackupServer(ServerManagerInterface backupServer) {
         this.backupServer = backupServer;
     }
 
+    /**
+     * Getter dell'attributo fileSystemTree
+     * @return
+     * @throws RemoteException
+     */
     public Tree getFileSystemTree() throws RemoteException{
         return fileSystemTree;
     }
 
+    /**
+     * Setter dell'attributo fileSystemTree
+     * @param fileSystemTree riferimento ad un filSystemTree
+     * @throws RemoteException
+     */
     public void setFileSystemTree(Tree fileSystemTree) throws RemoteException{
         this.fileSystemTree = fileSystemTree;
     }
 
+    /**
+     * Getter dell'indirizzo ip del server primario
+     * @return stringa contenente l'indirizzo ip del serverManager primario
+     * @throws RemoteException
+     */
     public String getPrimarySerIp() throws RemoteException{
         return primarySerIp;
     }
 
+    /**
+     * Setter dell'indirizzo ip del server primario
+     * @param primarySerIp indirizzo ip
+     * @throws RemoteException
+     */
     public void setPrimarySerIp(String primarySerIp) throws RemoteException{
         this.primarySerIp = primarySerIp;
     }
 
+    /**
+     * Getter dell'indirizzo ip del server secondario
+     * @return stringa contenente l'indirizzo ip del serverManager secondario
+     * @throws RemoteException
+     */
     public String getSecondarySerIp() throws RemoteException{
         return secondarySerIp;
     }
 
+    /**
+     * Setter dell'indirizzo ip del server secondario
+     * @return stringa contenente l'indirizzo ip del serverManager secondario
+     * @throws RemoteException
+     */
     public void setSecondarySerIp(String secondarySerIp) throws RemoteException {
         this.secondarySerIp = secondarySerIp;
     }
 
+    /**
+     * Metodo che ricarica il fileSystemTree in memoria, è utile per i serverManager di backup, siccome il loro fileSystem
+     * tree viene aggiornato ogni secondo dal server primario
+     * @throws RemoteException
+     */
     public void reloadFileSystemTree() throws RemoteException{
         FileInputStream f = null;
         ObjectInputStream in = null;
@@ -361,6 +404,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         return indexMax;
     }
 
+    /**
+     * Metodo che ritorna il tipo di un file che risiede in uno dei data nodes
+     * @param path percorso al file
+     * @return stringa contente il tipo di file (File/Dir)
+     * @throws RemoteException
+     */
     @Override
     public String getFileType(String path) throws RemoteException {
         String loc = getFileLocation(path);
@@ -495,6 +544,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         return totFiles;
     }
 
+    /**
+     * Metodo interno che viene utilizzato per calcolare la dimensione delle directory
+     * @param array array di file
+     * @param f riferimento alla directory
+     * @return
+     */
     private boolean unifyCapacity(ArrayList<MyFileType> array, MyFileType f) {
         for (MyFileType file : array) {
             if (file.getName().equals(f.getName())) {
@@ -878,6 +933,11 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     }
 
+    /**
+     * Metodo per salvare il fileSystemTree con quello attualmente in memoria
+     * @throws IOException
+     * @throws RemoteException
+     */
     @Override
     public void saveFileSystemTree() throws IOException, RemoteException{
         if (fileSystemTree == null) {

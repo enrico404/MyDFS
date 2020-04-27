@@ -4,6 +4,5 @@
 3) data replication
 4) dividere main e classe in due file separati (es serverManagerMain, serverManager)
 
-quando il primario si riconnette, aggiorna il suo filesystemtree con il secondario, che se è modificato
-vuol dire certamente che era crashato (il primario). Il client tuttavia rimane connesso con il secondario. Va gestito
-e riconnetterlo al primario quando rileva che è tornato online.
+- documentare codice
+- scrivere relazione su architettura

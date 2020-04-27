@@ -1,19 +1,28 @@
 package Client;
 
-import Server.ServerManager;
 import Server.ServerManagerInterface;
 import utils.utils;
-
-import java.net.MalformedURLException;
-import java.net.SocketException;
 import java.rmi.Naming;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 
+
+/**
+ * Thread che si occupa di contrallare la connessione con i data nodes, se tutti i data nodes sono crashati viene lanciato un errore.
+ * Si occupa inoltre di controllare la connessione con il server manager di backup se presente.
+ * Se il primario crasha fa passare il client al server di backup.
+ * Ogni secondo si prova inoltre a ristabilire la connessione con il server manager primario. Se il primario torna online
+ * si switcha automaticamente a questo.
+ */
 public class ServersConnectedChecker extends Thread {
 
+    /**
+     * Riferimento al client, contiene i riferimenti al server manager primario e secondario
+     */
     private ClientClass client;
 
+    /**
+     * Costruttore con parametri della classe
+     * @param client riferimento al client
+     */
     public ServersConnectedChecker(ClientClass client) {
         this.client = client;
     }
@@ -85,9 +94,7 @@ public class ServersConnectedChecker extends Thread {
                     utils.error_printer("Fallimento totale del sistema! Contattare immediatamente l'amministratore di sistema! (tutti serverManager falliti)");
                 }
 
-
             }
-
 
             try {
                 Thread.sleep(1000);
