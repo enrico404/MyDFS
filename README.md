@@ -11,7 +11,7 @@ Il sistema presenta tre tipologie di macchine:
 	3) Client (ClientClass): è il processo client del sistema
 
 
-![Alt text](./Img/ArchitetturaMyDFS.jpg)
+![Alt text](./Img/ArchitetturaMyDFS.png)
 
 
 
@@ -19,6 +19,33 @@ Client e Server in realtà sono tutte maccchine connesse alla stessa rete locale
 Viene tuttavia creata una rete virtuale com'è rappresentata nell'immagine.
 
 NB: il sistema è in grado di gestire più client contemporaneamente
+
+  L'architettura del sistema è ispirata a quella di Hadoop nella sua prima versione, la più semplice.
+ L'architettura è divisa in due livelli:
+ <ul>
+      <li>
+         Client - ServerManager
+      </li>
+     <li>
+         ServerManager - ServerClass
+      </li>
+  </ul>
+  Il ServerManager prende anche il nome di "Node Master", il suo compito è quello di interagire direttamente con il client
+  e gestire la distribuzione del carico di lavoro che viene affidato ai vari Data Node (ServerClass). Svolge quindi un lavoro
+ da controllore. L'intera architettura è basata sulla tipologia Master - Slave. Il Node Manger svolge quindi la funzione di
+ Master e i vari Data Nodes svolgono la funzione di Slaves.
+  <p>
+  Gli slave nodes (ServerClass) si occupano invece di tenere memorizzati i dati. Gli slave nodes condividono tutti la stessa
+  struttura di directory, in questo modo è possibile bilanciare equamente lo spazio allocato su ogni slave.
+  </p>
+ <p>
+  Il serverManager è in grado di gestire un numero corposo di client allo stesso tempo e un numero di slave illimitato. Più slave
+ saranno presenti nel cluster, più sarà lo spazio a disposizione disponibile. La scalabilità orrizzontale del sistema è quindi una proprietà
+  di questa particolare tipologia di architettura.
+  </p>
+
+
+
 
 ### ServerManager secondario
 
@@ -28,7 +55,13 @@ debole. In particolare è possibile designare anche un server manager secondario
 primario crasha e assume temporaneamente il ruolo di ServerManager primario, fino a quando quello originale non ripristina il 
 suo funzionamento.
 
-Maggiori informazioni nella [documentazione](./Documentation/index.html)
+Maggiori informazioni nella [documentazione](./Documentation/index.html) del codice
+
+
+### Consistenza e affidabilità
+
+È stato introdotto un meccanismo complesso di controllo per mantenere i filesystem consistenti
+tra di loro ed avere un certo livello di affidabilità nel sistema. Vedi [consistenza_e_affidabilità.pdf]
 
 # Istruzioni per l'uso
 
@@ -111,9 +144,10 @@ Configurazione dei serverManager nel caso si voglia usare anche il serverManager
 
 Ora un qualsiasi host connesso alla stessa rete locale può diventare un potenziale client per il cluster:
 
-	1) eseguire ./client_run.sh <ip_serverManager> 
+	1) eseguire ./client_run.sh <ip_serverManager>...
 	
-
+NB: se voglio attivare la modalità di funzionamento a due serverManager devo inserire gli ip di entrambi nel 
+comando
 ## Comandi
 
 Digitare il comando "help" per ottenere la lista di comandi che il software mette a disposizione.

@@ -9,9 +9,10 @@ if [ $# -eq 0 ]
 fi
 
 STR=""
-for (( i=1; i<=$#; i++ ))
-do
-  STR+="//$i/ServerManager "
+TMP=""
+for ip in $@; do
+    TMP=//$ip/ServerManager
+    STR=$STR" "$TMP
 done
 
-java Client.ClientClass $STR
+java Client.ClientClassMain $STR

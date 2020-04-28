@@ -503,7 +503,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public long getFreeSpace() throws RemoteException {
         File f = new File(sharedDir);
         long freeSpace = f.getUsableSpace();
-        System.out.println("Spazio libero sul nodo : " + name + " " + freeSpace);
+        //System.out.println("Spazio libero sul nodo : " + name + " " + freeSpace);
         return freeSpace;
     }
 
@@ -604,45 +604,5 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         return fileSystemTree;
     }
 
-    /**
-     * Main della classe
-     *
-     * @param args
-     * @throws RemoteException
-     */
-    public static void main(String args[]) throws RemoteException {
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new SecurityManager());
-        }
 
-        try {
-            List<Inet4Address> ips = utils.getInet4Addresses();
-            if (ips.size() >= 1) {
-                String myIp = ips.get(0).toString().substring(1);
-                System.setProperty("java.rmi.server.hostname", myIp);
-                System.out.println("Inserisci il nome del server: ");
-                Scanner in = new Scanner(System.in);
-                String name = in.nextLine();
-
-               // String name = utils.getMacAddresses();
-                ServerClass ser = new ServerClass(name);
-                Naming.rebind("//" + myIp + "/" + name, ser);
-                System.out.println();
-                System.out.println(name + " bindato nel registry");
-                System.out.println("Indirizzo ip bindato: " + myIp);
-                ser.setSharedDir(args[0]);
-
-//            ArrayList<MyFileType> res = ser.ls_func(ser.getSharedDir(), true);
-//            for(MyFileType f:res){
-//                System.out.println("Name: "+f.getName());
-//                System.out.println("Size: "+ f.getSize());
-//            }
-            } else {
-                utils.error_printer("Non sei connesso ad una rete locale");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
 }
