@@ -209,7 +209,6 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Setter dell'indirizzo ip del server secondario
-     * @return stringa contenente l'indirizzo ip del serverManager secondario
      * @throws RemoteException
      */
     public void setSecondarySerIp(String secondarySerIp) throws RemoteException {

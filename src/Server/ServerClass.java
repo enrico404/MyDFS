@@ -225,7 +225,6 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      * Setter del path alla directory condivisa
      *
      * @param path percorso alla directory condivisa
-     * @return true in caso di successo
      * @throws RemoteException
      */
     @Override
