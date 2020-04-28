@@ -193,6 +193,8 @@ public class utils {
 
     }
 
+
+
 //    public static String relative_to_absolute(String path, String currentPath){
 //        // dato path relativo ./xxx/file.txt, restituisce path assoluto al file, tolto il nome del file es /home/user/xxxx
 //        path = path.substring(1, path.length());

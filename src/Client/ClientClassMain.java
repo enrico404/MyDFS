@@ -1,6 +1,7 @@
 package Client;
 
 import Server.ServerInterface;
+import Server.ServerManager;
 import Server.ServerManagerInterface;
 import utils.MyFileType;
 import utils.ConsoleColors;
@@ -29,7 +30,6 @@ public class ClientClassMain {
 
         try {
             ServerManagerInterface ser = null;
-            ServerManagerInterface backupSer = null;
             ArrayList<ServerManagerInterface> serverManagers = new ArrayList<>();
             for (int i = 0; i < args.length; i++) {
                 String serverAdd = args[i];
@@ -40,6 +40,10 @@ public class ClientClassMain {
                     serverManagers.add(ser);
                 } catch (Exception e) {}
 
+            }
+            System.out.println("ServerManager in lista:");
+            for(ServerManagerInterface sm: serverManagers){
+                System.out.println(sm.getIp());
             }
             if (serverManagers.size() == 0) {
                 utils.error_printer("Non è stato trovato un server manager valido!");

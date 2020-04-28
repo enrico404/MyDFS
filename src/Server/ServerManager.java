@@ -31,7 +31,7 @@ import utils.FileServerThread;
  * </ul>
  * Il ServerManager prende anche il nome di "Node Master", il suo compito è quello di interagire direttamente con il client
  * e gestire la distribuzione del carico di lavoro che viene affidato ai vari Data Node (ServerClass). Svolge quindi un lavoro
- * da controllore. L'intera architettura è basata sulla tipologia Master - Slave. Il Node Manger svolge quindi la funzione di
+ * da controllore. L'intera architettura è basata sul principio architetturale Master - Slave. Il Node Manger svolge quindi la funzione di
  * Master e i vari Data Nodes svolgono la funzione di Slaves.
  * <p>
  * Gli slave nodes (ServerClass) si occupano invece di tenere memorizzati i dati. Gli slave nodes condividono tutti la stessa

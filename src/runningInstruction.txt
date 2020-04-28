@@ -18,7 +18,7 @@ Server:
 	- apri un altro terminale e spostati in out
 	- esegui:
 
-	java -Djava.security.policy=./perm.policy Server/ServerClass <dir_condivisa>
+	java -Djava.security.policy=./perm.policy Server/ServerClassMain <dir_condivisa>
 
 in caso di crash di qualche server (ma non tutti) il sistema continua a funzionare
 
@@ -26,19 +26,22 @@ serverManager:
 	- avvia rmregistry se non è già stato avviato nell'host
 	- apri un terminale in out ed esegui:
 
-	java -Djava.security.policy=./perm.policy Server/ServerManager //<serverX_ip>/<serverX_name>... [-s/-p ip_serverManager secondario/primario]
+	java -Djava.security.policy=./perm.policy Server/ServerManagerMain //<serverX_ip>/<serverX_name>... [-s/-p ip_serverManager secondario/primario]
 
     opzioni:
         -   -s: indica il serverManager secondario a cui fare riferimento
         -   -p: indica il serverPrimario a cui fare riferimento
 
-in caso di crash di uno dei due serverManager, il sistema continua a funzionare
+in caso di crash di uno dei due serverManager, il sistema continua a funzionare.
+
+NB: eseguire prima tutti i serverManagers secondari e poi lanciare il primario, altrimenti il sistema non si avvia correttamente
+poichè il primario cerca di contattare i secondari che non esistono
 
 Client: 
 	- apri un terminale e spostati nella cartella out
 	- esegui:
 
-	java Client.ClientClass //<serverManager_ip>/ServerManager
+	java Client.ClientClassMain //<serverManager_ip>/ServerManager
 
 
 

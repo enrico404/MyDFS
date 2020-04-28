@@ -32,7 +32,7 @@ NB: il sistema è in grado di gestire più client contemporaneamente
   </ul>
   Il ServerManager prende anche il nome di "Node Master", il suo compito è quello di interagire direttamente con il client
   e gestire la distribuzione del carico di lavoro che viene affidato ai vari Data Node (ServerClass). Svolge quindi un lavoro
- da controllore. L'intera architettura è basata sulla tipologia Master - Slave. Il Node Manger svolge quindi la funzione di
+ da controllore. L'intera architettura è basata sul principio architetturale Master - Slave. Il Node Manger svolge quindi la funzione di
  Master e i vari Data Nodes svolgono la funzione di Slaves.
   <p>
   Gli slave nodes (ServerClass) si occupano invece di tenere memorizzati i dati. Gli slave nodes condividono tutti la stessa
@@ -128,17 +128,22 @@ NB: i nomi dei server devono essere differenti l'uno dall'altro, un uso scorrett
 
 #### ServerManager secondario
 
-Configurazione dei serverManager nel caso si voglia usare anche il serverManager secondario di backup
+Configurazione dei serverManager nel caso si voglia usare anche il serverManager secondario di backup.
 
+NB: Eseguire prima tutti i serverManagers secondari, poi alla fine lanciare il primario.
+
+##### ServerManager secondario
+
+    1) apri un altro terminale nella directory "run/serverManager"
+    2) eseguire ./serverManager_run.sh <slave_ip>... [-p ip_serverManager primario]
+    
+    
 ##### ServerManager primario
 
     1) apri un altro terminale nella directory "run/serverManager"
     2) eseguire ./serverManager_run.sh <slave_ip>... [-s ip_serverManager secondario]
     
-##### ServerManager secondario
 
-    1) apri un altro terminale nella directory "run/serverManager"
-    2) eseguire ./serverManager_run.sh <slave_ip>... [-p ip_serverManager primario]
 
 ### Client
 

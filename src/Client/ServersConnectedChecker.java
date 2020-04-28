@@ -89,6 +89,9 @@ public class ServersConnectedChecker extends Thread {
                         client.setBackupSer(oldPrimary);
                         onSecondary = true;
 
+                    }else {
+                        utils.error_printer("Nessun serverManager secondario disponibile!");
+
                     }
                 } catch (Exception e2) {
                     utils.error_printer("Fallimento totale del sistema! Contattare immediatamente l'amministratore di sistema! (tutti serverManager falliti)");
