@@ -90,7 +90,7 @@ public class ServersConnectedChecker extends Thread {
                         onSecondary = true;
 
                     }else {
-                        utils.error_printer("Nessun serverManager secondario disponibile!");
+                        utils.error_printer("Fallimento totale del sistema! Nessun serverManager secondario da contattare disponibile!");
 
                     }
                 } catch (Exception e2) {

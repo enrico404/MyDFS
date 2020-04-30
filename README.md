@@ -30,13 +30,13 @@ NB: il sistema è in grado di gestire più client contemporaneamente
          ServerManager - ServerClass
       </li>
   </ul>
-  Il ServerManager prende anche il nome di "Node Master", il suo compito è quello di interagire direttamente con il client
+  Il ServerManager prende anche il nome di "Node Manager", il suo compito è quello di interagire direttamente con il client
   e gestire la distribuzione del carico di lavoro che viene affidato ai vari Data Node (ServerClass). Svolge quindi un lavoro
  da controllore. L'intera architettura è basata sul principio architetturale Master - Slave. Il Node Manger svolge quindi la funzione di
  Master e i vari Data Nodes svolgono la funzione di Slaves.
   <p>
   Gli slave nodes (ServerClass) si occupano invece di tenere memorizzati i dati. Gli slave nodes condividono tutti la stessa
-  struttura di directory, in questo modo è possibile bilanciare equamente lo spazio allocato su ogni slave.
+  struttura di directory, in questo modo è possibile bilanciare equamente lo spazio allocato su ogni nodo.
   </p>
  <p>
   Il serverManager è in grado di gestire un numero corposo di client allo stesso tempo e un numero di slave illimitato. Più slave
@@ -55,13 +55,14 @@ debole. In particolare è possibile designare anche un server manager secondario
 primario crasha e assume temporaneamente il ruolo di ServerManager primario, fino a quando quello originale non ripristina il 
 suo funzionamento.
 
-Maggiori informazioni nella [documentazione](./Documentation/index.html) del codice
 
 
-### Consistenza e affidabilità
 
-È stato introdotto un meccanismo complesso di controllo per mantenere i filesystem consistenti
-tra di loro ed avere un certo livello di affidabilità nel sistema. Vedi [consistenza_e_affidabilità.pdf]
+Maggiori informazioni nella [documentazione dell'architettura ](./ArchitetturaMyDFS.pdf) e nella
+[documentazione del codice](./Documentation/index.html).
+
+
+
 
 # Istruzioni per l'uso
 
