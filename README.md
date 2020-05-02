@@ -68,7 +68,9 @@ Maggiori informazioni nella [documentazione dell'architettura ](./ArchitetturaMy
 
 ## Dipendenze
 
-- java11
+- java11 o superiore
+
+(java --version per verificare la versione)
 
 NB: il software è stato testato e sviluppato su Linux, l'esecuzione corretta su altri sistemi operativi non è garantita!
 
@@ -153,7 +155,7 @@ Ora un qualsiasi host connesso alla stessa rete locale può diventare un potenzi
 	1) eseguire ./client_run.sh <ip_serverManager>...
 	
 NB: se voglio attivare la modalità di funzionamento a due serverManager devo inserire gli ip di entrambi nel 
-comando
+comando nel seguente ordine: <ip_serverManager_primario> <ip_serverManger_secondario>
 ## Comandi
 
 Digitare il comando "help" per ottenere la lista di comandi che il software mette a disposizione.
