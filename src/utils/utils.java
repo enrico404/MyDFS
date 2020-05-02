@@ -1,6 +1,7 @@
 package utils;
 
 import Client.ClientClass;
+import Server.Tree;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -65,6 +66,19 @@ public class utils {
     }
 
     /**
+     * Metodo per controllare se un array di tipo ArrayList contiene una determinata stringa
+     * @param array array di stringhe in input
+     * @param val Stringa da cercare nell'array
+     * @return ritorna true se l'array contiene la stringa val
+     */
+    public static boolean contains(ArrayList<String> array, String val){
+        for(String el: array){
+            if(el.equals(val)) return true;
+        }
+        return false;
+    }
+
+    /**
      * Metodo per controllare se un array contiene una determinata stringa in una certa posizione
      * @param array array di stringhe in input
      * @param val Stringa da cercare nell'array
@@ -74,6 +88,23 @@ public class utils {
     public static boolean contains(String[] array, String val, int index){
         if (array.length > index){
             if(array[index].equals(val)) return true;
+        }
+        return false;
+    }
+
+
+
+    /**
+     * Metodo per controllare se un array di Nodi, contiene il nodo specificato
+     * @param array array di nodi
+     * @param node nodo da cercare
+     * @return true se lo contiene, false altrimenti
+     */
+    public static boolean contains(ArrayList<Tree.Node> array, Tree.Node node){
+        for(Tree.Node n: array){
+            if(n.path.equals(node.path)){
+                return true;
+            }
         }
         return false;
     }
@@ -134,6 +165,14 @@ public class utils {
         System.err.println(ConsoleColors.RED+error+ConsoleColors.RESET);
     }
 
+    /**
+     * Metodo per la stampa a console di messaggi di successo, la stampa è colorata di verde
+     * @param message stringa contenente il messaggio
+     */
+    public static void success_printer(String message){
+
+        System.out.println(ConsoleColors.GREEN_BOLD+message+ConsoleColors.RESET);
+    }
 
     /**
      * Metodo per ottenere il percorso senza l'ultimo file/directory
@@ -153,6 +192,8 @@ public class utils {
             return "";
 
     }
+
+
 
 //    public static String relative_to_absolute(String path, String currentPath){
 //        // dato path relativo ./xxx/file.txt, restituisce path assoluto al file, tolto il nome del file es /home/user/xxxx

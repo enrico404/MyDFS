@@ -30,10 +30,15 @@ public interface ServerInterface extends Remote {
     long getCapacity() throws RemoteException;
     String getIp() throws RemoteException, SocketException;
     boolean startFileClient(int port, String ip, String path) throws IOException;
-    boolean mkdir(String path) throws RemoteException;
+    boolean mkdir(String path) throws IOException;
     boolean isDirectory(String path) throws RemoteException;
     File[] listFiles(String path) throws RemoteException;
     boolean move(String path1, String path2) throws IOException;
     boolean startFileServer(int port, String path, long size) throws IOException;
+    void updateFileSystemTree(String path, boolean delete) throws IOException, RemoteException;
+    void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException;
+    Tree getFileSystemTree() throws RemoteException;
+    boolean correct(Tree FileSystemTree) throws IOException;
+
 
 }

@@ -3,8 +3,7 @@ package Server;
 import utils.MyFileType;
 import utils.utils;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -56,6 +55,8 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      */
     private FileClient fc = null;
 
+    private Tree fileSystemTree = null;
+
 
     /**
      * Costruttore di default, va semplicemente a settare il nome del data node
@@ -66,6 +67,140 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public ServerClass(String Name) throws RemoteException {
         super();
         name = Name;
+
+        FileInputStream f = null;
+        ObjectInputStream in = null;
+
+        try {
+            f = new FileInputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTreeSlave");
+            in = new ObjectInputStream(f);
+            fileSystemTree = (Tree) in.readObject();
+
+
+
+        } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }finally{
+            if(in != null){
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if(f != null){
+                try {
+                    f.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if(fileSystemTree == null){
+                    Tree.Node root = new Tree.Node("/", "root");
+                    fileSystemTree = new Tree(root);
+                    fileSystemTree.init();
+            }
+
+        }
+    }
+
+
+    /**
+     * Metodo che si occupa di fare l'update del filesystem tree interno.
+     * @param path
+     * @throws IOException
+     * @throws RemoteException
+     */
+    @Override
+    public void updateFileSystemTree(String path, boolean delete) throws IOException, RemoteException {
+
+        if(fileSystemTree == null){
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+       // System.out.println("Aggiorno filesystemtree: "+path);
+        FileOutputStream fout = new FileOutputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTreeSlave");
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+      //  System.out.println("Dopo apertura");
+        if(!delete)
+            fileSystemTree.insert(path, utils.getFileName(path));
+        else
+            fileSystemTree.deleteNode(path);
+        out.writeObject(fileSystemTree);
+       // System.out.println("oggetto salvato");
+        out.close();
+        fout.close();
+
+    }
+
+    /**
+     * Metodo che si occupa di fare l'update del filesystem tree interno in caso di movimento di directory
+     * @param path1 percorso iniziale
+     * @param path2 nuovo percorso
+     * @throws IOException
+     * @throws RemoteException
+     */
+    @Override
+    public void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException {
+
+        if(fileSystemTree == null){
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+
+        FileOutputStream fout = new FileOutputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTreeSlave");
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+        fileSystemTree.move(path1, path2);
+        out.writeObject(fileSystemTree);
+        out.close();
+        fout.close();
+
+    }
+
+
+    /**
+     * Metodo per la correzione del tree di directory nel nodo slave. Devo gestire sia i casi di creazione, rimozione e
+     * movimento di directory. "listDirs" è la lista di directory aggiornata.
+     * @param FileSystemTree fileSystemTree del serverManager aggiornato
+     * @return true in caso di correzione con succcesso
+     * @throws IOException
+     */
+    public boolean correct(Tree FileSystemTree) throws IOException {
+        boolean modified = false;
+        ArrayList<String> listDirs = FileSystemTree.getDirs();
+        //ciclo per vedere se ho directory nuove da aggiungere
+        for(String dir: listDirs){
+            String realPath = getSharedDir()+dir;
+            if(!checkExists(realPath)) {
+                System.out.println("la directory "+ dir+" non esiste, la creo");
+                mkdir(realPath);
+                modified = true;
+            }
+        }
+
+        String delPath = "";
+        //ciclo per vedere se devo rimuovere delle directory nello slave
+        for(String dir: fileSystemTree.getDirs()){
+            //se la directory dello slave non è presente nel fileSystemTree del serverManager, la devo eliminare
+            if(!utils.contains(FileSystemTree.getDirs(), dir)){
+                String realPath = getSharedDir()+dir;
+                rm_func_rec(realPath);
+                delPath = dir;
+                modified = true;
+                break;
+            }
+        }
+        if(!delPath.equals(""))
+            updateFileSystemTree(delPath, true);
+        return modified;
     }
 
     /**
@@ -90,13 +225,12 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      * Setter del path alla directory condivisa
      *
      * @param path percorso alla directory condivisa
-     * @return true in caso di successo
      * @throws RemoteException
      */
     @Override
     public void setSharedDir(String path) throws RemoteException {
         sharedDir = path;
-        System.out.println("Direcotory condivisa settata con successo!");
+        System.out.println("Directory condivisa settata con successo!");
         System.out.println("Percorso: " + sharedDir);
     }
 
@@ -291,7 +425,13 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         File f = new File(path);
         //se il file esiste
         if (f.exists()) {
-            if (f.delete()) {
+            if(f.isDirectory()){
+                if (f.delete()) {
+                    System.out.println("file " + path + " eliminato con successo");
+                    return true;
+                }
+            }
+            else if (f.delete()) {
                 System.out.println("file " + path + " eliminato con successo");
                 return true;
             }
@@ -362,7 +502,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public long getFreeSpace() throws RemoteException {
         File f = new File(sharedDir);
         long freeSpace = f.getUsableSpace();
-        System.out.println("Spazio libero sul nodo : " + name + " " + freeSpace);
+        //System.out.println("Spazio libero sul nodo : " + name + " " + freeSpace);
         return freeSpace;
     }
 
@@ -442,51 +582,26 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
      * @throws RemoteException
      */
     @Override
-    public boolean mkdir(String path) throws RemoteException {
+    public boolean mkdir(String path) throws IOException {
         File f = new File(path);
-        if (f.mkdir()) return true;
+        String relativePath = path.substring(sharedDir.length());
+        if(!f.exists()) {
+            if (f.mkdir()) {
+                updateFileSystemTree(relativePath, false);
+                return true;
+            }
+        }
         return false;
     }
 
     /**
-     * Main della classe
-     *
-     * @param args
-     * @throws RemoteException
+     * Getter dell'attributo fileSystemTree
+     * @return fileSystemTree
      */
-    public static void main(String args[]) throws RemoteException {
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new SecurityManager());
-        }
-
-        try {
-            List<Inet4Address> ips = utils.getInet4Addresses();
-            if (ips.size() >= 1) {
-                String myIp = ips.get(0).toString().substring(1);
-                System.setProperty("java.rmi.server.hostname", myIp);
-                System.out.println("Inserisci il nome del server: ");
-                Scanner in = new Scanner(System.in);
-                String name = in.nextLine();
-
-               // String name = utils.getMacAddresses();
-                ServerClass ser = new ServerClass(name);
-                Naming.rebind("//" + myIp + "/" + name, ser);
-                System.out.println();
-                System.out.println(name + " bindato nel registry");
-                System.out.println("Indirizzo ip bindato: " + myIp);
-                ser.setSharedDir(args[0]);
-
-//            ArrayList<MyFileType> res = ser.ls_func(ser.getSharedDir(), true);
-//            for(MyFileType f:res){
-//                System.out.println("Name: "+f.getName());
-//                System.out.println("Size: "+ f.getSize());
-//            }
-            } else {
-                utils.error_printer("Non sei connesso ad una rete locale");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+    @Override
+    public Tree getFileSystemTree(){
+        return fileSystemTree;
     }
+
+
 }

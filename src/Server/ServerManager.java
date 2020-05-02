@@ -1,24 +1,21 @@
 package Server;
 
-import Client.ClientClass;
 import utils.MyFileType;
 import utils.utils;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Inet4Address;
 import java.net.MalformedURLException;
 import java.net.SocketException;
-import java.rmi.Naming;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
+import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import utils.FileClient;
+import Client.ParamParser;
+import utils.FileServerThread;
 
 
 /**
@@ -34,15 +31,24 @@ import utils.FileClient;
  * </ul>
  * Il ServerManager prende anche il nome di "Node Master", il suo compito è quello di interagire direttamente con il client
  * e gestire la distribuzione del carico di lavoro che viene affidato ai vari Data Node (ServerClass). Svolge quindi un lavoro
- * da controllore. L'intera architettura è basata sulla tipologia Master - Slave. Il Node Manger svolge quindi la funzione di
+ * da controllore. L'intera architettura è basata sul principio architetturale Master - Slave. Il Node Manger svolge quindi la funzione di
  * Master e i vari Data Nodes svolgono la funzione di Slaves.
  * <p>
  * Gli slave nodes (ServerClass) si occupano invece di tenere memorizzati i dati. Gli slave nodes condividono tutti la stessa
  * struttura di directory, in questo modo è possibile bilanciare equamente lo spazio allocato su ogni slave.
+ * </p>
  * <p>
  * Il serverManager è in grado di gestire un numero corposo di client allo stesso tempo e un numero di slave illimitato. Più slave
- * saranno presenti nel cluster, più sarà lo spazio a disposizion disponibile. La scalabilità orrizzontale del sistema è quindi una proprietà
+ * saranno presenti nel cluster, più sarà lo spazio a disposizione disponibile. La scalabilità orrizzontale del sistema è quindi una proprietà
  * di questa particolare tipologia di architettura.
+ * </p>
+ * <p>
+ * Il sistema nel suo funzionamento più semplice è resistente a fallimenti solo nei Data Nodes, il serverManager
+ * è un single point of failure (SPOF). Per questo è stato introdotto un meccanismo per rendere più resistente questo punto
+ * debole. In particolare è possibile designare anche un server manager secondario che viene attivato solo se il serverManager
+ * primario crasha e assume temporaneamente il ruolo di ServerManager primario, fino a quando quello originale non ripristina il
+ * suo funzionamento.
+ * </p>
  */
 
 public class ServerManager extends UnicastRemoteObject implements ServerManagerInterface {
@@ -62,10 +68,27 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * Array contenente tutti i riferimenti ai nodi slave che gestisce
      */
     private ArrayList<ServerInterface> slaveServers = new ArrayList<ServerInterface>();
+
+    /**
+     * Array che contiene dati (nome e ip) degli slaves a cui il serverManager è connesso
+     */
+    private ArrayList<SlaveServerCache> slaveServerCaches = new ArrayList<>();
+
     /**
      * porta utilizzata per il trasferimento di file interni al cluster
      */
     private int port = 6770;
+
+    /**
+     * struttura dati contenente l'albero delle directory che devono avere tutti i data nodes
+     */
+    private Tree fileSystemTree = null;
+
+    private String primarySerIp = "";
+
+    private String secondarySerIp = "";
+
+    public ServerManagerInterface backupServer;
 
 
     /**
@@ -75,29 +98,299 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @param IpArray lista di indirizzi ip dei nodi slave
      * @throws RemoteException
      */
-    protected ServerManager(String Name, ArrayList<String> IpArray) throws RemoteException {
+    public ServerManager(String Name, ArrayList<String> IpArray) throws RemoteException {
         super();
         name = Name;
         ipArray = IpArray;
+
+
+        FileInputStream f = null;
+        ObjectInputStream in = null;
+        try {
+            f = new FileInputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree");
+            in = new ObjectInputStream(f);
+            fileSystemTree = (Tree) in.readObject();
+
+
+        } catch (EOFException |FileNotFoundException e) {
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (f != null) {
+                try {
+                    f.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (fileSystemTree == null) {
+                Tree.Node root = new Tree.Node("/", "root");
+                fileSystemTree = new Tree(root);
+                fileSystemTree.init();
+            }
+
+        }
+
+
     }
 
     /**
-     * Funzione interna per la connessione del ServerManager ai vari nodi slave
+     * Getter del riferimento al server di backup
+     * @return
+     */
+    public ServerManagerInterface getBackupServer() {
+        return backupServer;
+    }
+
+    /**
+     * Setter del riferimento al server di backup
+     * @param backupServer
+     */
+    public void setBackupServer(ServerManagerInterface backupServer) {
+        this.backupServer = backupServer;
+    }
+
+    /**
+     * Getter dell'attributo fileSystemTree
+     * @return
+     * @throws RemoteException
+     */
+    public Tree getFileSystemTree() throws RemoteException{
+        return fileSystemTree;
+    }
+
+    /**
+     * Setter dell'attributo fileSystemTree
+     * @param fileSystemTree riferimento ad un filSystemTree
+     * @throws RemoteException
+     */
+    public void setFileSystemTree(Tree fileSystemTree) throws RemoteException{
+        this.fileSystemTree = fileSystemTree;
+    }
+
+    /**
+     * Getter dell'indirizzo ip del server primario
+     * @return stringa contenente l'indirizzo ip del serverManager primario
+     * @throws RemoteException
+     */
+    public String getPrimarySerIp() throws RemoteException{
+        return primarySerIp;
+    }
+
+    /**
+     * Setter dell'indirizzo ip del server primario
+     * @param primarySerIp indirizzo ip
+     * @throws RemoteException
+     */
+    public void setPrimarySerIp(String primarySerIp) throws RemoteException{
+        this.primarySerIp = primarySerIp;
+    }
+
+    /**
+     * Getter dell'indirizzo ip del server secondario
+     * @return stringa contenente l'indirizzo ip del serverManager secondario
+     * @throws RemoteException
+     */
+    public String getSecondarySerIp() throws RemoteException{
+        return secondarySerIp;
+    }
+
+    /**
+     * Setter dell'indirizzo ip del server secondario
+     * @throws RemoteException
+     */
+    public void setSecondarySerIp(String secondarySerIp) throws RemoteException {
+        this.secondarySerIp = secondarySerIp;
+    }
+
+    /**
+     * Metodo che ricarica il fileSystemTree in memoria, è utile per i serverManager di backup, siccome il loro fileSystem
+     * tree viene aggiornato ogni secondo dal server primario
+     * @throws RemoteException
+     */
+    public void reloadFileSystemTree() throws RemoteException{
+        FileInputStream f = null;
+        ObjectInputStream in = null;
+        try {
+            f = new FileInputStream(System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree");
+            in = new ObjectInputStream(f);
+            fileSystemTree = (Tree) in.readObject();
+//            System.out.println("File system tree ricaricato");
+//            fileSystemTree.trasverseTree();
+
+        } catch (EOFException |FileNotFoundException e) {
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Getter del nome del serverManager
+     *
+     * @return
+     */
+    @Override
+    public String getName() throws RemoteException {
+        return name;
+    }
+
+    /**
+     * Setter del nome del serverManager
+     *
+     * @param name
+     */
+    @Override
+    public void setName(String name) throws RemoteException {
+        this.name = name;
+    }
+
+    /**
+     * Getter dell'array slaveServerCaches
+     *
+     * @return array contenente il nome degli slave servers a cui il serverManager è connesso
+     */
+    @Override
+    public ArrayList<SlaveServerCache> getSlaveServerCaches() throws RemoteException {
+        return slaveServerCaches;
+    }
+
+
+    /**
+     * Funzione per il check della consistenza delle directory tra i vari data nodes, viene eseguita subito dopo la connessione
+     * con i data nodes
+     *
+     * @return true se si è riusciti a rendere consistenti tra di loro tutti i nodi
+     */
+    @Override
+    public boolean consistency_check() throws IOException {
+
+        for (ServerInterface slave : slaveServers) {
+            if (slave.getFileSystemTree() != null) {
+                // System.out.println("Devo correggere: "+ !fileSystemTree.checkTree(slave.getFileSystemTree()));
+
+//                System.out.println("slave: "+ slave.getName());
+//                System.out.println(slave.getFileSystemTree().getDirs());
+
+//                System.out.println("Slave:");
+//                System.out.println(slave.getFileSystemTree().getDirs());
+//                System.out.println("ServerManager:");
+//                System.out.println(fileSystemTree.getDirs());
+//                System.out.println(fileSystemTree.getDirs().size());
+               // System.out.println("");
+                if (!fileSystemTree.checkTree(slave.getFileSystemTree())) {
+                    System.out.println("Il server: " + slave.getName() + " non è stato rilevato consistente");
+                    System.out.println(slave.getFileSystemTree().getDirs());
+                    System.out.println("Correzione in corso...");
+
+                    while (slave.correct(fileSystemTree)) {
+                        System.out.println("Correzzione effettuata");
+                    }
+                    System.out.println("La correzione del nodo è stata completata con successo!");
+                    System.out.println(slave.getFileSystemTree().getDirs());
+                }
+            }
+        }
+        return true;
+    }
+
+
+    /**
+     * Funzione interna per la connessione del ServerManager ai vari nodi slave. Chiamato solo in fase di accensione del
+     * ServerManager
      *
      * @throws RemoteException
      * @throws NotBoundException
      * @throws MalformedURLException
      */
-    private void connectToDataServers() throws RemoteException, NotBoundException, MalformedURLException {
+    public boolean connectToDataServers() throws IOException, NotBoundException {
+
+        int i = 0;
         for (String ip : ipArray) {
-            ServerInterface ser = (ServerInterface) Naming.lookup(ip);
-            slaveServers.add(ser);
+            try {
+                ServerInterface ser = (ServerInterface) Naming.lookup(ip);
+                slaveServers.add(ser);
+                //serve per vedere se effettivamente ho ottenuto una connessione all'oggetto funzionante
+                ser.getName();
+
+                SlaveServerCache cache = new SlaveServerCache(ser.getName(), ip);
+                slaveServerCaches.add(cache);
+                i++;
+            } catch (ConnectIOException e) {
+                utils.error_printer("È stato rilevato un guasto nel server: " + ip);
+                System.out.println(slaveServers);
+                slaveServers.remove(i);
+
+
+            } catch (ConnectException e) {
+                utils.error_printer("È stato rilevato un guasto nel server: " + ip);
+                slaveServers.remove(i);
+            }
 
         }
 
+        reloadFileSystemTree();
+
+        try {
+
+            getBackupServer().reloadFileSystemTree();
+            System.out.println("Secondario:");
+            System.out.println(getBackupServer().getFileSystemTree().getDirs());
+            System.out.println("Primario");
+            System.out.println(fileSystemTree.getDirs());
+            //se sono diversi il file system tree secondario diventa il primario
+            if(!fileSystemTree.checkTree(getBackupServer().getFileSystemTree())){
+                fileSystemTree = getBackupServer().getFileSystemTree();
+                fileSystemTree.updateDir();
+                saveFileSystemTree();
+
+
+            }
+        }catch (Exception e){}
+
+        if (fileSystemTree != null) {
+            System.out.println("Il file system tree è il seguente: ");
+            fileSystemTree.trasverseTree();
+        }
+        System.out.println("file system tree dirs:");
+        System.out.println(fileSystemTree.getDirs());
+        System.out.println("Slave servers a cui sono connesso:");
+        for (ServerInterface slave : slaveServers) {
+            System.out.println(slave.getName());
+        }
+        if (!consistency_check()) {
+            return false;
+        }
+
+        return true;
     }
 
-    // INTERFACE METHODS
+    /**
+     * Metodo per il checking dello stato degli slave nodes, se uno slave node crasha, questo viene rimosso dalla lista
+     * di servers a cui il ServerManager è connesso e riportato all'utente.
+     *
+     * @throws RemoteException
+     */
+    @Override
+    public void asyncServersChecking() throws RemoteException {
+        AsyncServersChecker threadChecker = new AsyncServersChecker(this);
+        threadChecker.start();
+    }
+
 
     /**
      * Metodo che ritorna l'indice del nodo slave con più spazio libero sul disco. Meccanismo di loadBalancing greedy.
@@ -119,6 +412,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         return indexMax;
     }
 
+    /**
+     * Metodo che ritorna il tipo di un file che risiede in uno dei data nodes
+     * @param path percorso al file
+     * @return stringa contente il tipo di file (File/Dir)
+     * @throws RemoteException
+     */
     @Override
     public String getFileType(String path) throws RemoteException {
         String loc = getFileLocation(path);
@@ -203,7 +502,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         ArrayList<MyFileType> totFiles = new ArrayList<MyFileType>();
         for (ServerInterface slave : slaveServers) {
             //se esiste la cartella nello slave devo scrivere i suoi file
-            realPath = slave.getSharedDir()+path;
+            realPath = slave.getSharedDir() + path;
             if (slave.checkExists(realPath)) {
                 //System.out.println("Scrivo file dello slave: "+ slave.getName());
                 ArrayList<MyFileType> tmpList = new ArrayList<MyFileType>();
@@ -231,7 +530,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         String realPath;
         ArrayList<MyFileType> totFiles = new ArrayList<MyFileType>();
         for (ServerInterface slave : slaveServers) {
-            realPath = slave.getSharedDir()+path;
+            realPath = slave.getSharedDir() + path;
             //se esiste la cartella nello slave devo scrivere i suoi file
             if (slave.checkExists(realPath)) {
                 for (MyFileType f : slave.ls_func(realPath, dirCapacity)) {
@@ -253,6 +552,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         return totFiles;
     }
 
+    /**
+     * Metodo interno che viene utilizzato per calcolare la dimensione delle directory
+     * @param array array di file
+     * @param f riferimento alla directory
+     * @return
+     */
     private boolean unifyCapacity(ArrayList<MyFileType> array, MyFileType f) {
         for (MyFileType file : array) {
             if (file.getName().equals(f.getName())) {
@@ -296,8 +601,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      *
      * @param path percorso della directory condivisa (il percorso deve essere comune per tutti i nodi slave)
      * @return true se il percorso viene settato con successo
-     * @deprecated
      * @throws RemoteException
+     * @deprecated
      */
     @Deprecated
     @Override
@@ -318,7 +623,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     @Override
     public boolean checkExists(String path) throws RemoteException {
         for (ServerInterface slave : slaveServers) {
-            String realPath = slave.getSharedDir()+path;
+            String realPath = slave.getSharedDir() + path;
             //se esiste la cartella nello slave mi ci posso spostare dentro
             if (slave.checkExists(realPath)) return true;
         }
@@ -336,11 +641,12 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @throws RemoteException
      */
     @Override
-    public boolean rm_func(String path) throws RemoteException {
+    public boolean rm_func(String path) throws IOException {
         for (ServerInterface slave : slaveServers) {
-            String realPath = slave.getSharedDir()+path;
+            String realPath = slave.getSharedDir() + path;
             //se esiste il file nello slave, il file è supposto univoco
             if (slave.checkExists(realPath)) {
+                updateFileSystemTree(path, true);
                 if (slave.rm_func(realPath))
                     return true;
             }
@@ -358,12 +664,16 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @throws RemoteException
      */
     @Override
-    public boolean rm_func_rec(String path) throws RemoteException {
+    public boolean rm_func_rec(String path) throws IOException {
         boolean err_canc = false;
         for (ServerInterface slave : slaveServers) {
-            String realPath = slave.getSharedDir()+path;
+            String realPath = slave.getSharedDir() + path;
             //se esiste il file nello slave, il file è supposto univoco
             if (slave.checkExists(realPath)) {
+                //aggiorno fileSystemTree serverManager
+                updateFileSystemTree(path, true);
+                //aggiorno fileSystemTree del nodo slave
+                slave.updateFileSystemTree(path, true);
                 if (!(slave.rm_func_rec(realPath)))
                     err_canc = true;
             }
@@ -392,17 +702,17 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             int slaveIndex = freerNodeChooser();
             // recupero il reference al nodo slave
             ServerInterface slave = getSlaveNode(slaveIndex);
-            //System.out.println("nodo scelto: "+ slave.getName());
+            System.out.println("nodo scelto: "+ slave.getName());
 
             //se è un trasferimento di file interno al file system remoto
             if (checkExists(localPath)) {
-                String realRemotePath = slave.getSharedDir()+remotePath;
+                String realRemotePath = slave.getSharedDir() + remotePath;
                 slave.startFileServer(port, realRemotePath, getFile(localPath).getSize());
                 String loc = getFileLocation(localPath);
                 //System.out.println("locazione: "+loc);
                 ServerInterface ClSlave = getSlaveNode(loc);
-                String realLocalPath = ClSlave.getSharedDir()+localPath;
-              //  System.out.println("localpath: "+realLocalPath+" remote: "+realRemotePath);
+                String realLocalPath = ClSlave.getSharedDir() + localPath;
+                //System.out.println("localpath: "+realLocalPath+" remote: "+realRemotePath);
                 ClSlave.startFileClient(port, slave.getIp(), realLocalPath);
                 return true;
 
@@ -422,17 +732,17 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     @Override
     public void recursiveCopyInt(String clientPath, String serverPath) throws IOException {
         for (ServerInterface slave : getSlaveServers()) {
-            String realClientPath = slave.getSharedDir()+clientPath;
+            String realClientPath = slave.getSharedDir() + clientPath;
             String realServerPath;
-//            System.out.println("real client path : "+realClientPath);
+            System.out.println("real client path : "+realClientPath);
             if (slave.isDirectory(realClientPath) && slave.checkExists(realClientPath)) {
                 String[] param = new String[1];
                 param[0] = serverPath;
-                //System.out.println("Creo directory : "+serverPath);
                 //ser.mkdir(param, this.getCurrentPath());
-                realServerPath = slave.getSharedDir()+serverPath;
-//                System.out.println("Creo directory : "+realServerPath);
-                slave.mkdir(realServerPath);
+                realServerPath = slave.getSharedDir() + serverPath;
+                System.out.println("Creo directory : "+realServerPath);
+                if(slave.mkdir(realServerPath))
+                    updateFileSystemTree(serverPath, false);
                 for (File sub : slave.listFiles(realClientPath)) {
                     String newClientPath = clientPath + '/' + sub.getName();
                     String newSerPath = serverPath + '/' + sub.getName();
@@ -460,7 +770,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         String location = "";
         for (ServerInterface slave : slaveServers) {
             //se esiste la cartella nello slave devo scrivere i suoi file
-            String realPath = slave.getSharedDir()+path1;
+            String realPath = slave.getSharedDir() + path1;
             if (slave.checkExists(realPath)) {
                 location = slave.getName();
             }
@@ -543,75 +853,54 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             //si recupera il nodo slave e si cmabia il percorso dei file/directory
             // es : s1 -> s1
             String fileName = utils.getFileName(path1);
-            path2 += "/" + fileName;
+            if(path2.equals("/")){
+                path2 += fileName;
+            }
+            else
+                path2 += "/" + fileName;
             if (path1 != path2) {
                 ServerInterface slave = getSlaveNode(loc1);
-                realPath1 = slave.getSharedDir()+path1;
-                realPath2 = slave.getSharedDir()+path2;
+                realPath1 = slave.getSharedDir() + path1;
+                realPath2 = slave.getSharedDir() + path2;
+//                System.out.println("path1: "+path1);
+//                System.out.println("path2: "+path2);
+                //aggiorno fileSystemTree di serverManager e slave
+                updateFileSystemTree_move(path1, path2);
+                slave.updateFileSystemTree_move(path1, path2);
+
                 slave.move(realPath1, realPath2);
             }
 
         } else if (f1.getType().equals("Dir") && f2.getType().equals("Dir")) {
 
             String fileName = utils.getFileName(path1);
-            path2 += "/" + fileName;
+            if(path2.equals("/")){
+                path2 += fileName;
+            }
+            else
+                path2 += "/" + fileName;
+
             //la copia ricorsiva non è più necessaria, devo solo cambiare i nomi come nel
             //caso precendente
             //System.out.println("Inizio la copia ricorsiva di "+f1.getName());
             //recursiveCopy(f1, path1, path2);
             for (ServerInterface slave : slaveServers) {
-                realPath1 = slave.getSharedDir()+path1;
-                realPath2 = slave.getSharedDir()+path2;
+                realPath1 = slave.getSharedDir() + path1;
+                realPath2 = slave.getSharedDir() + path2;
                 if (path1 != path2) {
+                    //aggiorno fileSystemTree di serverManager e slave.
+//                    System.out.println("path1: "+path1);
+//                    System.out.println("path2: "+path2);
+                    updateFileSystemTree_move(path1, path2);
+                    slave.updateFileSystemTree_move(path1, path2);
+
                     slave.move(realPath1, realPath2);
                 }
             }
 
 
         }
-//        if (loc1.equals(loc2)){
-//            //il file deve essere spostato di locazione, ma la destinazione è sullo stesso nodo
-//            // es : s1 -> s1
-//            String fileName = utils.getFileName(path1);
-//            path2 += "/"+fileName;
-//            if(path1 != path2) {
-//                ServerInterface slave = getSlaveNode(loc1);
-//                slave.move(path1, path2);
-//            }
-//        else {
-//            // il file deve essere spostato di locazione, ma la destinazione è su due nodi diversi
-//            // es : s1 -> s2
-//            ServerInterface slave1 = getSlaveNode(loc1);
-//            ServerInterface slave2 = getSlaveNode(loc2);
-//
-//            if(slave1.isDirectory(path1) && slave2.isDirectory(path2)){
-//                File f = new File(path1);
-//                if(f.exists()){
-//                    String fileName = utils.getFileName(path1);
-//                    path2 += "/"+fileName;
-//                    System.out.println("Inizio la copia ricorsiva di "+f.getName());
-//                    recursiveCopy(f, slave2, path1, path2);
-//
-//                }
-//                ArrayList<String> paths = new ArrayList<String>();
-//                //recupero i percorsi dei vari file
-//                paths.add(utils.getFileName(path1));
-//                //cancello ricorsivamente le vecchia directory
-//                client.rm_func_rec(this, paths);
-//
-//
-//
-//            }
-//            else if(!(slave1.isDirectory(path1)) && slave2.isDirectory(path2)){
-//                String fileName = utils.getFileName(path1);
-//                path2 += "/"+fileName;
-//                //spostamento di file in una directory
-//
-//                cp_func_slave(slave2, path1, path2);
-//                slave1.rm_func(path1);
-//
-//            }
-        //casi impossibili da gestire: file -> file e  dir -> file
+
         else {
             System.err.println("Errore nella sintassi del comando");
             return false;
@@ -621,6 +910,89 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
         return true;
     }
+
+    /**
+     * Metodo che si occupa di fare l'update del filesystem tree interno.
+     *
+     * @param path
+     * @throws IOException
+     * @throws RemoteException
+     */
+    @Override
+    public void updateFileSystemTree(String path, boolean delete) throws IOException, RemoteException {
+
+        if (fileSystemTree == null) {
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+
+        String fTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
+        FileOutputStream fout = new FileOutputStream(fTreePath);
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+        if (!delete)
+            fileSystemTree.insert(path, utils.getFileName(path));
+        else
+            fileSystemTree.deleteNode(path);
+        out.writeObject(fileSystemTree);
+        out.close();
+        fout.close();
+
+
+    }
+
+    /**
+     * Metodo per salvare il fileSystemTree con quello attualmente in memoria
+     * @throws IOException
+     * @throws RemoteException
+     */
+    @Override
+    public void saveFileSystemTree() throws IOException, RemoteException{
+        if (fileSystemTree == null) {
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+
+        String fTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
+        FileOutputStream fout = new FileOutputStream(fTreePath);
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+        out.writeObject(fileSystemTree);
+        out.close();
+        fout.close();
+
+    }
+
+
+    /**
+     * Metodo che si occupa di fare l'update del filesystem tree interno in caso di movimento di directory
+     *
+     * @param path1 percorso iniziale
+     * @param path2 nuovo percorso
+     * @throws IOException
+     * @throws RemoteException
+     */
+    @Override
+    public void updateFileSystemTree_move(String path1, String path2) throws IOException, RemoteException {
+
+        if (fileSystemTree == null) {
+            Tree.Node root = new Tree.Node("/", "root");
+            fileSystemTree = new Tree(root);
+            fileSystemTree.init();
+        }
+
+        String fTreePath = System.getProperty("user.home") + "/.config/MyDFS/fileSystemTree";
+        FileOutputStream fout = new FileOutputStream(fTreePath);
+        ObjectOutputStream out = new ObjectOutputStream(fout);
+        fileSystemTree.move(path1, path2);
+        out.writeObject(fileSystemTree);
+        out.close();
+        fout.close();
+
+//        System.out.println("File system modificato in : ");
+//        fileSystemTree.trasverseTree();
+    }
+
 
     /**
      * Metodo per la creazione di directory sui nodi slave, dato in input il nome di una/più directory viene creata la stessa
@@ -633,7 +1005,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @throws RemoteException
      */
     @Override
-    public boolean mkdir(String[] param, String currentPath) throws RemoteException {
+    public boolean mkdir(String[] param, String currentPath) throws IOException {
+
+
         String realPath = "";
         for (int i = 1; i < param.length; i++) {
 
@@ -652,16 +1026,22 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //                String loc = getFileLocation(tmp);
 //                ServerInterface slave = getSlaveNode(loc);
                 for (ServerInterface slave : slaveServers) {
-                    realPath = slave.getSharedDir()+param[i];
+                    realPath = slave.getSharedDir() + param[i];
                     slave.mkdir(realPath);
                 }
+                updateFileSystemTree(currentPath + "/" + param[i], false);
             } else {
                 //caso in cui scrivo solo il nome della cartella
                 for (ServerInterface slave : slaveServers) {
-                    realPath = slave.getSharedDir()+currentPath;
-                    if (slave.checkExists(realPath))
-                        slave.mkdir(realPath + "/" + param[i]);
+                    realPath = slave.getSharedDir() + currentPath;
+                    if (slave.checkExists(realPath)) {
+                        realPath = realPath + "/" + param[i];
+                        //System.out.println(currentPath+ "/" + param[i]);
+                        slave.mkdir(realPath);
+
+                    }
                 }
+                updateFileSystemTree(currentPath + "/" + param[i], false);
             }
         }
 
@@ -729,6 +1109,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
     /**
      * Funzione che restituisce un riferimento al file, dato input il path (non reale al file, ma già processato dalla funzione cleanString)
+     *
      * @param path percorso in formato /dir1/...
      * @return riferimento al file
      * @throws RemoteException
@@ -747,50 +1128,10 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             }
         }
         //se non esiste ritorno file vuoto
-        return new MyFileType("shDir", "Dir", 4096,"-", "-");
+        return new MyFileType("shDir", "Dir", 4096, "-", "-");
     }
 
-    /**
-     * Main della classe serverManager
-     *
-     * @param args lista di indirizzi ip dei vari nodi slave appartenenti al cluster
-     * @throws RemoteException
-     */
-    public static void main(String args[]) throws RemoteException {
 
-        ArrayList<String> ipArr = new ArrayList<String>();
-
-        for (String ip : args) {
-            ipArr.add(ip);
-        }
-
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new SecurityManager());
-        }
-
-        try {
-            List<Inet4Address> ips = utils.getInet4Addresses();
-            if (ips.size() >= 1) {
-                String myIp = ips.get(0).toString().substring(1);
-                System.setProperty("java.rmi.server.hostname", myIp);
-                ServerManager serM = new ServerManager("ServerManager", ipArr);
-                Naming.rebind("//" + myIp + "/ServerManager", serM);
-                System.out.println();
-                System.out.println("ServerManager bindato nel registry");
-                System.out.println("Indirizzo ip bindato: " + myIp);
-
-                //serM.selShared_dir(System.getProperty("user.home") + "/shDir");
-                //connetto il serverManger ai vari dataServer specificati
-                serM.connectToDataServers();
-                //serM.balance();
-            } else {
-                System.err.println("Non sei connesso ad una rete locale");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
 
 
 }

@@ -8,5 +8,5 @@ if [ $# -eq 0 ]
 fi
 echo "Entra come myDfsUser (utente creato durante l'installazione)"
 su myDfsUser -c "cd $SOURCES_MyDFS/out;
-java -Djava.security.policy=./perm.policy Server/ServerManager $*"
+java -Djava.security.policy=./perm.policy Server/ServerManagerMain $*"
 

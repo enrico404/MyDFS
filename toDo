@@ -2,3 +2,7 @@
 
 2) GUI (??)
 3) data replication
+4) dividere main e classe in due file separati (es serverManagerMain, serverManager)
+
+- documentare codice
+- scrivere relazione su architettura

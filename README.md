@@ -11,7 +11,7 @@ Il sistema presenta tre tipologie di macchine:
 	3) Client (ClientClass): è il processo client del sistema
 
 
-![Alt text](./Img/ArchitetturaMyDFS.jpg)
+![Alt text](./Img/ArchitetturaMyDFS.png)
 
 
 
@@ -20,14 +20,57 @@ Viene tuttavia creata una rete virtuale com'è rappresentata nell'immagine.
 
 NB: il sistema è in grado di gestire più client contemporaneamente
 
+  L'architettura del sistema è ispirata a quella di Hadoop nella sua prima versione, la più semplice.
+ L'architettura è divisa in due livelli:
+ <ul>
+      <li>
+         Client - ServerManager
+      </li>
+     <li>
+         ServerManager - ServerClass
+      </li>
+  </ul>
+  Il ServerManager prende anche il nome di "Node Manager", il suo compito è quello di interagire direttamente con il client
+  e gestire la distribuzione del carico di lavoro che viene affidato ai vari Data Node (ServerClass). Svolge quindi un lavoro
+ da controllore. L'intera architettura è basata sul principio architetturale Master - Slave. Il Node Manger svolge quindi la funzione di
+ Master e i vari Data Nodes svolgono la funzione di Slaves.
+  <p>
+  Gli slave nodes (ServerClass) si occupano invece di tenere memorizzati i dati. Gli slave nodes condividono tutti la stessa
+  struttura di directory, in questo modo è possibile bilanciare equamente lo spazio allocato su ogni nodo.
+  </p>
+ <p>
+  Il serverManager è in grado di gestire un numero corposo di client allo stesso tempo e un numero di slave illimitato. Più slave
+ saranno presenti nel cluster, più sarà lo spazio a disposizione disponibile. La scalabilità orrizzontale del sistema è quindi una proprietà
+  di questa particolare tipologia di architettura.
+  </p>
 
-Maggiori informazioni nella [documentazione](./Documentation/index.html)
+
+
+
+### ServerManager secondario
+
+Il sistema nel suo funzionamento più semplice è resistente a fallimenti solo nei Data Nodes, il serverManager 
+è un single point of failure (SPOF). Per questo è stato introdotto un meccanismo per rendere più resistente questo punto
+debole. In particolare è possibile designare anche un server manager secondario che viene attivato solo se il serverManager 
+primario crasha e assume temporaneamente il ruolo di ServerManager primario, fino a quando quello originale non ripristina il 
+suo funzionamento.
+
+
+
+
+Maggiori informazioni nella [documentazione dell'architettura ](./ArchitetturaMyDFS.pdf) e nella
+[documentazione del codice](./Documentation/index.html).
+
+
+
 
 # Istruzioni per l'uso
 
 ## Dipendenze
 
-- java11
+- java11 o superiore
+
+(java --version per verificare la versione)
 
 NB: il software è stato testato e sviluppato su Linux, l'esecuzione corretta su altri sistemi operativi non è garantita!
 
@@ -80,21 +123,39 @@ NB: se il nodo è già avviato come "Data node" saltare i passi 1 e 2
 	1) apri un terminale nella directory "run/serverManager"
 	2) eseguire ./serverManager_init.sh
 	3) apri un altro terminale nella directory "run/serverManager"
-	4) eseguire ./serverManager_run.sh <slave_ip>...
+	4) eseguire ./serverManager_run.sh <slave_ip>... [-s/-p ip_serverManager secondario/primario]
 
 slave_ip deve essere nel formato:  //ip_slave/server_name
 
 NB: i nomi dei server devono essere differenti l'uno dall'altro, un uso scorretto potrebbe compromettere il funzionamento del software
 
+#### ServerManager secondario
+
+Configurazione dei serverManager nel caso si voglia usare anche il serverManager secondario di backup.
+
+NB: Eseguire prima tutti i serverManagers secondari, poi alla fine lanciare il primario.
+
+##### ServerManager secondario
+
+    1) apri un altro terminale nella directory "run/serverManager"
+    2) eseguire ./serverManager_run.sh <slave_ip>... [-p ip_serverManager primario]
+    
+    
+##### ServerManager primario
+
+    1) apri un altro terminale nella directory "run/serverManager"
+    2) eseguire ./serverManager_run.sh <slave_ip>... [-s ip_serverManager secondario]
+    
 
 
 ### Client
 
 Ora un qualsiasi host connesso alla stessa rete locale può diventare un potenziale client per il cluster:
 
-	1) eseguire ./client_run.sh <ip_serverManager> 
+	1) eseguire ./client_run.sh <ip_serverManager>...
 	
-
+NB: se voglio attivare la modalità di funzionamento a due serverManager devo inserire gli ip di entrambi nel 
+comando nel seguente ordine: <ip_serverManager_primario> <ip_serverManger_secondario>
 ## Comandi
 
 Digitare il comando "help" per ottenere la lista di comandi che il software mette a disposizione.

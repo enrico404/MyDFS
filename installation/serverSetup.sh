@@ -3,6 +3,9 @@
 sudo adduser --force-badname myDfsUser
 sudo usermod -aG sudo,disk myDfsUser
 
+su myDfsUser -c 'mkdir -p /home/myDfsUser/.config'
+su myDfsUser -c 'mkdir -p /home/myDfsUser/.config/MyDFS'
+
 if [ $# -eq 1 ]
   then
       sudo cp -r ../../MyDFS $1
