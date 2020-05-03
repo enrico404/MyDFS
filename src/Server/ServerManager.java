@@ -11,6 +11,7 @@ import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 import utils.FileClient;
@@ -77,7 +78,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
     /**
      * porta utilizzata per il trasferimento di file interni al cluster
      */
-    private int port = 6770;
+    private int port;
 
     /**
      * struttura dati contenente l'albero delle directory che devono avere tutti i data nodes
@@ -98,7 +99,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @param IpArray lista di indirizzi ip dei nodi slave
      * @throws RemoteException
      */
-    public ServerManager(String Name, ArrayList<String> IpArray) throws RemoteException {
+    public ServerManager(String Name, ArrayList<String> IpArray) throws IOException {
         super();
         name = Name;
         ipArray = IpArray;
@@ -143,6 +144,8 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 
         }
 
+        HashMap<String, String> config = utils.toHashMap(System.getProperty("user.home")+"/.config/MyDFS/configMyDFS.txt");
+        port = Integer.parseInt(config.get("PORT_TRINT"));
 
     }
 
@@ -277,7 +280,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
      * @return true se si è riusciti a rendere consistenti tra di loro tutti i nodi
      */
     @Override
-    public boolean consistency_check() throws IOException {
+    public synchronized boolean consistency_check() throws IOException {
 
         for (ServerInterface slave : slaveServers) {
             if (slave.getFileSystemTree() != null) {
@@ -334,11 +337,17 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 utils.error_printer("È stato rilevato un guasto nel server: " + ip);
                 System.out.println(slaveServers);
                 slaveServers.remove(i);
+                SlaveServerCache slaveCache = new SlaveServerCache(utils.getFileName(ip), ip);
+                ReconnecterThread reconnecter = new ReconnecterThread(slaveCache, this);
+                reconnecter.start();
 
 
             } catch (ConnectException e) {
                 utils.error_printer("È stato rilevato un guasto nel server: " + ip);
                 slaveServers.remove(i);
+                SlaveServerCache slaveCache = new SlaveServerCache(utils.getFileName(ip), ip);
+                ReconnecterThread reconnecter = new ReconnecterThread(slaveCache, this);
+                reconnecter.start();
             }
 
         }
@@ -702,7 +711,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
             int slaveIndex = freerNodeChooser();
             // recupero il reference al nodo slave
             ServerInterface slave = getSlaveNode(slaveIndex);
-            System.out.println("nodo scelto: "+ slave.getName());
+            //System.out.println("nodo scelto: "+ slave.getName());
 
             //se è un trasferimento di file interno al file system remoto
             if (checkExists(localPath)) {
@@ -713,7 +722,9 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 ServerInterface ClSlave = getSlaveNode(loc);
                 String realLocalPath = ClSlave.getSharedDir() + localPath;
                 //System.out.println("localpath: "+realLocalPath+" remote: "+realRemotePath);
+                //System.out.println("Mando file");
                 ClSlave.startFileClient(port, slave.getIp(), realLocalPath);
+
                 return true;
 
             }
@@ -734,13 +745,13 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         for (ServerInterface slave : getSlaveServers()) {
             String realClientPath = slave.getSharedDir() + clientPath;
             String realServerPath;
-            System.out.println("real client path : "+realClientPath);
+            //System.out.println("real client path : "+realClientPath);
             if (slave.isDirectory(realClientPath) && slave.checkExists(realClientPath)) {
                 String[] param = new String[1];
                 param[0] = serverPath;
                 //ser.mkdir(param, this.getCurrentPath());
                 realServerPath = slave.getSharedDir() + serverPath;
-                System.out.println("Creo directory : "+realServerPath);
+               // System.out.println("Creo directory : "+realServerPath);
                 if(slave.mkdir(realServerPath))
                     updateFileSystemTree(serverPath, false);
                 for (File sub : slave.listFiles(realClientPath)) {

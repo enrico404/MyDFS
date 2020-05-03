@@ -37,6 +37,7 @@ public class ReconnecterThread extends Thread {
         while (true) {
 
             try {
+
                 ServerInterface slave = (ServerInterface) Naming.lookup(serverCache.getIp());
                 //serve per vedere se effettivamente ho ottenuto una connessione all'oggetto funzionante
                 slave.getName();

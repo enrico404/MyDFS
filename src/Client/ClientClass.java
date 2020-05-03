@@ -9,6 +9,8 @@ import java.io.*;
 import java.net.SocketException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
+
 import utils.utils;
 import utils.FileClient;
 import utils.FileServerThread;
@@ -30,11 +32,11 @@ public class ClientClass implements Serializable {
     /**
      * porta utilizzata per il trasferimento di file dal client verso il server
      */
-    private int port = 6668;
+    private int port;
     /**
      * porta utilizzata per il trasferimento di file dal server verso il client
      */
-    private int port2 = 6669;
+    private int port2;
     /**
      * riferimento al FileClient, serve per mandare i file
      */
@@ -65,7 +67,7 @@ public class ClientClass implements Serializable {
      *
      * @param serversArray array di server manager
      */
-    public ClientClass(ArrayList<ServerManagerInterface> serversArray) throws RemoteException {
+    public ClientClass(ArrayList<ServerManagerInterface> serversArray) throws IOException {
         super();
         currentPath = "";
         basePath = currentPath;
@@ -82,6 +84,9 @@ public class ClientClass implements Serializable {
             this.backupSer = null;
         }
 
+        HashMap<String, String> config = utils.toHashMap(System.getProperty("user.home")+"/.config/MyDFS/configMyDFS.txt");
+        port = Integer.parseInt(config.get("PORT_CL1"));
+        port2 = Integer.parseInt(config.get("PORT_CL2"));
     }
 
     /**
@@ -321,10 +326,11 @@ public class ClientClass implements Serializable {
             //System.out.println("nodo scelto: "+ slave.getName());
             String realRemotePath = slave.getSharedDir() + remotePath;
             slave.startFileServer(port, realRemotePath, f.length());
-
             fc = new FileClient(port, slave.getIp());
             localPath = utils.cleanString(localPath, this);
             fc.send(localPath, true, f.length());
+
+
             return true;
         }
         return false;

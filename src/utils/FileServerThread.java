@@ -4,6 +4,7 @@ import Server.ServerInterface;
 
 import java.awt.image.ColorConvertOp;
 import java.io.IOException;
+import java.io.Serializable;
 import java.security.SignatureException;
 
 /**
@@ -87,6 +88,7 @@ public class FileServerThread extends Thread{
     public String getPath(){
         return path;
     }
+
 
     /**
      * Codice che viene eseguito allo start del thread

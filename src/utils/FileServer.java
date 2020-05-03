@@ -41,6 +41,7 @@ public class FileServer {
      */
     private long size;
 
+
     /**
      * Costruttore con parametri della classe, è possibile specificare se la classe deve essere verbosa o meno
      *
@@ -52,6 +53,8 @@ public class FileServer {
         verbose = Verbose;
 
     }
+
+
 
     /**
      * Metodo per il binding di un'istanza del fileServer con un client. Se il socket è già bindato, viene solo settato
@@ -98,6 +101,7 @@ public class FileServer {
 
 
             try {
+                //System.out.println("In attesa...");
                 SocketChannel sock = servSock.accept();
                 //System.out.print("\rAccepted connection.. " + sock);
                 Path OutPath = Paths.get(path);
@@ -150,8 +154,7 @@ public class FileServer {
                 sock.close();
 
             }catch (NoSuchFileException e){
-                //per i trasferimenti ricorsivi viene fuori questa eccezione (cerca di trasferire directory), ma i file vengono  trasferiti comunque
-                //correttamente
+
             }
             catch (IOException e) {
                 e.printStackTrace();

@@ -87,7 +87,7 @@ public class FileClient {
 
             sock.close();
             inChannel.close();
-
+            sock = null;
         } catch (FileNotFoundException e) {
             utils.error_printer("File non trovato " + filePath);
         } catch (IOException e) {

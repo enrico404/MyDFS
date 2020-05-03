@@ -1,12 +1,7 @@
 Modalità di sviluppo
 
 Per ogni nodo:
-	- crea la directory condivisa
-
-
-Nel serverManager crea la directory MyDFS in /home/<user>/.config
-
-Attenzione: il nome dell'utente deve essere lo stesso per tutti quanti i nodi
+	- esegui serverSetup_devMode.sh
 
 
 
@@ -18,12 +13,12 @@ Server:
 	- apri un altro terminale e spostati in out
 	- esegui:
 
-	java -Djava.security.policy=./perm.policy Server/ServerClassMain <dir_condivisa>
+	java -Djava.security.policy=./perm.policy Server/ServerClassMain
 
 in caso di crash di qualche server (ma non tutti) il sistema continua a funzionare
 
 serverManager:
-	- avvia rmregistry se non è già stato avviato nell'host
+	- avvia rmiregistry se non è già stato avviato nell'host
 	- apri un terminale in out ed esegui:
 
 	java -Djava.security.policy=./perm.policy Server/ServerManagerMain //<serverX_ip>/<serverX_name>... [-s/-p ip_serverManager secondario/primario]
@@ -41,7 +36,7 @@ Client:
 	- apri un terminale e spostati nella cartella out
 	- esegui:
 
-	java Client.ClientClassMain //<serverManager_ip>/ServerManager
+	java Client.ClientClassMain <//<serverManager_ip>/ServerManager>..
 
 
 

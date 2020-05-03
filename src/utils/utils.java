@@ -3,6 +3,10 @@ package utils;
 import Client.ClientClass;
 import Server.Tree;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -193,7 +197,26 @@ public class utils {
 
     }
 
+    /**
+     * Metodo per convertire un file stile dizionario in una hashmap
+     * @param pathToFile percorso al file
+     * @return hashmap del file in input
+     * @throws IOException
+     */
+    public static HashMap<String, String> toHashMap(String pathToFile) throws IOException {
 
+        HashMap<String, String> hashmap = new HashMap<String, String>();
+        BufferedReader in = new BufferedReader(new FileReader(pathToFile));
+        String str;
+        while((str = in.readLine()) != null){
+            String[] keyValue = str.split("=");
+            if(keyValue.length == 2)
+                hashmap.put(keyValue[0], keyValue[1]);
+
+        }
+        return hashmap;
+
+    }
 
 //    public static String relative_to_absolute(String path, String currentPath){
 //        // dato path relativo ./xxx/file.txt, restituisce path assoluto al file, tolto il nome del file es /home/user/xxxx

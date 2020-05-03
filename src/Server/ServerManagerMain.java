@@ -6,6 +6,7 @@ import java.net.Inet4Address;
 import java.rmi.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import Client.ParamParser;
 import utils.FileServerThread;
@@ -90,8 +91,9 @@ public class ServerManagerMain {
                 System.out.println("ServerManager bindato nel registry");
                 System.out.println("Indirizzo ip bindato: " + myIp);
 
+                HashMap<String, String> config = utils.toHashMap(System.getProperty("user.home")+"/.config/MyDFS/configMyDFS.txt");
+                int port1 = Integer.parseInt(config.get("PORT_SMSEC"));
 
-                int port1 = 6660;
 
 
                 if (!secondarySerIP.equals("") || !primarySerIP.equals("")) {

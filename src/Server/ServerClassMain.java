@@ -5,6 +5,7 @@ import utils.utils;
 import java.net.Inet4Address;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
@@ -35,7 +36,9 @@ public class ServerClassMain {
                 System.out.println();
                 System.out.println(name + " bindato nel registry");
                 System.out.println("Indirizzo ip bindato: " + myIp);
-                ser.setSharedDir(args[0]);
+                HashMap<String, String> config = utils.toHashMap(System.getProperty("user.home")+"/.config/MyDFS/configMyDFS.txt");
+                String sharedDir = config.get("SHDIR_MyDFS");
+                ser.setSharedDir(sharedDir);
 
 //            ArrayList<MyFileType> res = ser.ls_func(ser.getSharedDir(), true);
 //            for(MyFileType f:res){

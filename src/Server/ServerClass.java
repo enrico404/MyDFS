@@ -246,6 +246,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         return ip;
     }
 
+
     /**
      * Metodo per controlare l'esistenza di un file/directory all'interno del nodo, è utilizzato in diverse funzioni come
      * mv e cp

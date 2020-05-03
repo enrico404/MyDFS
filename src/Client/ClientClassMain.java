@@ -163,6 +163,7 @@ public class ClientClassMain {
                                 if (!(client.cp_func(client.getSer(), param[i], param[param.length - 1]))) {
                                     utils.error_printer("Errore nella copia del file!");
                                 }
+
                                 System.err.println("");
                                 param[param.length - 1] = originalDPath;
                             }
@@ -265,7 +266,6 @@ public class ClientClassMain {
                         } else {
                             utils.error_printer("Errore nella sintassi del comando! Digita 'help cp' per vedere la sintassi del comando");
                         }
-
                     } else if (ins.startsWith("mkdir")) {
                         String[] param = ins.split(" ");
 
@@ -321,7 +321,7 @@ public class ClientClassMain {
 
 
         } catch (Exception e) {
-            utils.error_printer("Errore nella comunicazione con il server manager");
+            utils.error_printer("Errore nella comunicazione");
             e.printStackTrace();
         }
 
