@@ -762,16 +762,11 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
         for (ServerInterface slave : getSlaveServers()) {
             String realClientPath = slave.getSharedDir() + clientPath;
             String realServerPath;
-            System.out.println("real client path : " + realClientPath);
-            System.out.println("isDir: " + slave.isDirectory(realClientPath) + " exists: " + slave.checkExists(realClientPath));
+//            System.out.println("real client path : " + realClientPath);
+//            System.out.println("isDir: " + slave.isDirectory(realClientPath) + " exists: " + slave.checkExists(realClientPath));
             if (slave.isDirectory(realClientPath) && slave.checkExists(realClientPath)) {
                 String[] param = new String[2];
-
-                //ser.mkdir(param, this.getCurrentPath());
-
-                //lo inserisco nel campo 1 perchè sto simulando una chiamata a mkdir
-
-
+                
                 //System.out.println("Creo directory : " + realServerPath);
                 //creo le directory in tutti i nodi, vengono create solo se non ci sono già, andrebbe messo in mkdir
 
