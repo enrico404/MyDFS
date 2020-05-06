@@ -766,7 +766,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
 //            System.out.println("isDir: " + slave.isDirectory(realClientPath) + " exists: " + slave.checkExists(realClientPath));
             if (slave.isDirectory(realClientPath) && slave.checkExists(realClientPath)) {
                 String[] param = new String[2];
-                
+
                 //System.out.println("Creo directory : " + realServerPath);
                 //creo le directory in tutti i nodi, vengono create solo se non ci sono già, andrebbe messo in mkdir
 
@@ -780,7 +780,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     recursiveCopyInt(newClientPath, newSerPath);
                 }
             } else {
-                System.out.println("copio: " + clientPath + " in: " + serverPath);
+                //System.out.println("copio: " + clientPath + " in: " + serverPath);
                 //i path vengono modificati all'interno di cp_func
                 cp_func(clientPath, serverPath);
             }
