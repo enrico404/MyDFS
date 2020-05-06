@@ -18,7 +18,6 @@ import utils.Converter;
 
 
 
-
 /**
  * Classe client principale. Il client mantiene lo stato, in questo modo il server risulta essere più semplice e non ha
  * bisogno di manternere le informazioni per i vari client. Grazie a questo approccio si va a favorire la scalabilità del

@@ -569,7 +569,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
         File f = new File(path);
         if (!(f.isDirectory())) {
             fc = new FileClient(port, ip);
-            fc.send(path, false, f.length());
+            fc.send(path, true, f.length());
             return true;
         }
         return false;
@@ -586,6 +586,7 @@ public class ServerClass extends UnicastRemoteObject implements ServerInterface 
     public boolean mkdir(String path) throws IOException {
         File f = new File(path);
         String relativePath = path.substring(sharedDir.length());
+        //System.out.println("path: "+path+" exists: "+ f.exists());
         if(!f.exists()) {
             if (f.mkdir()) {
                 updateFileSystemTree(relativePath, false);

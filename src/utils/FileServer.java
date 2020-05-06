@@ -154,7 +154,7 @@ public class FileServer {
                 sock.close();
 
             }catch (NoSuchFileException e){
-
+                e.printStackTrace();
             }
             catch (IOException e) {
                 e.printStackTrace();

@@ -66,6 +66,7 @@ public class FileClient {
                 //sock.write(buffer);
 
                 total += read;
+                //System.out.println("total: "+ total);
                 if (verbose) {
                     after = System.currentTimeMillis();
                     elapsedTime = (after - before);
