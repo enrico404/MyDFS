@@ -1051,26 +1051,32 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                     realPath = slave.getSharedDir() + param[i];
                     slave.mkdir(realPath);
                 }
-                updateFileSystemTree(currentPath + "/" + param[i], false);
+
             } else {
 
                 //caso in cui scrivo solo il nome della cartella
                 for (ServerInterface slave : slaveServers) {
                     realPath = slave.getSharedDir() + currentPath;
-                    if (slave.checkExists(realPath)) {
-                        if(realPath.endsWith("/") || param[i].startsWith("/"))
-                            realPath = realPath + param[i];
-                        else
-                            realPath = realPath + "/" + param[i];
-                        //System.out.println(currentPath+ "/" + param[i]);
-                        //System.out.println("Creo dir su slave: " + realPath);
-                        slave.mkdir(realPath);
 
-                    }
+                    if (realPath.endsWith("/") || param[i].startsWith("/"))
+                        realPath = realPath + param[i];
+                    else
+                        realPath = realPath + "/" + param[i];
+                    //System.out.println(currentPath+ "/" + param[i]);
+                    //System.out.println("Creo dir su slave: " + realPath);
+                    slave.mkdir(realPath);
+
+
                 }
 
-                updateFileSystemTree(currentPath + "/" + param[i], false);
             }
+            String newDir;
+            if(currentPath.endsWith("/") || param[i].startsWith("/"))
+                newDir = currentPath + param[i];
+            else
+                newDir = currentPath + "/" + param[i];
+            //System.out.println("metto nel filesyustem Tree: " + newDir);
+            updateFileSystemTree(newDir, false);
         }
 
         return true;
