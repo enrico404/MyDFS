@@ -185,3 +185,18 @@ Digitando "help <nome_comando> si ottiene il manuale relativo a quel comando"
 La modalità di sviluppo è accessibile seguendo le istruzioni presenti nel file [runninginstruction](./src/runningInstruction.txt).
 Utilizzando la modalità di sviluppo è possibile sviluppare e debuggare il software in maniera più fluida ed efficiente (non vengono utilizzati 
 gli script .sh).
+
+
+# Screenshots
+
+![Alt text](./Img/screenshots/sview.png)
+
+![Alt text](./Img/screenshots/help.png)
+
+![Alt text](./Img/screenshots/ll.png)
+
+![Alt text](./Img/screenshots/faultTollerance1.png)
+
+![Alt text](./Img/screenshots/faultTollerance2.png)
+
+![Alt text](./Img/screenshots/faultTollerance3.png)
