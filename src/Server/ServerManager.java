@@ -1075,7 +1075,7 @@ public class ServerManager extends UnicastRemoteObject implements ServerManagerI
                 newDir = currentPath + param[i];
             else
                 newDir = currentPath + "/" + param[i];
-            //System.out.println("metto nel filesyustem Tree: " + newDir);
+            //System.out.println("metto nel filesystem Tree: " + newDir);
             updateFileSystemTree(newDir, false);
         }
 

@@ -376,7 +376,8 @@ public class ClientClass implements Serializable {
                 if (!ser.checkExists(path1))
                     utils.error_printer("la directory \"" + utils.getFileName(path1) + "\" non esiste!");
                 else
-                    utils.error_printer("Percorso di destinazione errato!" + utils.pathWithoutLast(path2));
+                    utils.error_printer("Percorso di destinazione errato! " + utils.pathWithoutLast(path2));
+                    utils.error_printer("La directory di destinazione inserita non è stata trovata!");
                 return false;
             }
             //}
