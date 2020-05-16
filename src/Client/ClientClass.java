@@ -191,9 +191,9 @@ public class ClientClass implements Serializable {
                         System.out.print(file.getName() + "   ");
                 } else {
                     if (verbose)
-                        System.out.println(ConsoleColors.GREEN + file.getName() + ConsoleColors.RESET + "     | Type: " + file.getType() + "     | Size: " + hsize + " | location: - ");
+                        System.out.println(ConsoleColors.BLUE_BOLD + file.getName() + ConsoleColors.RESET + "     | Type: " + file.getType() + "     | Size: " + hsize + " | location: - ");
                     else
-                        System.out.print(ConsoleColors.GREEN + file.getName() + "   " + ConsoleColors.RESET);
+                        System.out.print(ConsoleColors.BLUE_BOLD + file.getName() + "   " + ConsoleColors.RESET);
                 }
             }
         }
