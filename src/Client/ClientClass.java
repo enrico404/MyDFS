@@ -297,7 +297,7 @@ public class ClientClass implements Serializable {
                 utils.error_printer("Fallita l'eliminazione di " + path);
                 return false;
             }
-            System.out.println("" + path + " eliminato con successo!");
+         //   System.out.println("" + path + " eliminato con successo!");
         }
 
         return true;
