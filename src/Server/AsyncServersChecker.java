@@ -40,9 +40,12 @@ public class AsyncServersChecker extends Thread {
 
         ArrayList<SlaveServerCache> slaveServerCaches = ser.getSlaveServerCaches();
         ArrayList<String> slaveServerNames = new ArrayList<>();
+
         for(ServerInterface slave: ser.getSlaveServers()){
-            slaveServerNames.add(slave.getName());
+            if(!utils.contains(slaveServerNames, slave.getName()))
+                slaveServerNames.add(slave.getName());
         }
+
 
         for(SlaveServerCache slaveCache: slaveServerCaches){
             if(!utils.contains(slaveServerNames, slaveCache.getName())){
@@ -71,11 +74,9 @@ public class AsyncServersChecker extends Thread {
                         //funziona viene lanciata una delle due eccezioni
                         slaveServers.get(j).getName();
 
-                    } catch (ConnectIOException e) {
+                    } catch (ConnectException | ConnectIOException e) {
                         manageServerCrashed(j, ser);
 
-                    } catch (ConnectException e) {
-                        manageServerCrashed(j, ser);
                     }
 
 

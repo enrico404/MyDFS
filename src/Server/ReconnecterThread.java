@@ -42,12 +42,21 @@ public class ReconnecterThread extends Thread {
                 //serve per vedere se effettivamente ho ottenuto una connessione all'oggetto funzionante
                 slave.getName();
                 System.out.println("Mi sono riconnesso con: "+serverCache.getName());
-                //se non provoca eccezioni funziona e lo riaggiungo alla lista di slave servers
-                ser.getSlaveServers().add(slave);
-                ser.reloadFileSystemTree();
-                //devo rendere il server consistente
-                ser.consistency_check();
-                //esco dal ciclo perchè mi sono riconnesso correttamente
+                //se non provoca eccezioni funziona e lo riaggiungo alla lista di slave servers se non è già presente
+                boolean contains = false;
+                for(ServerInterface sl: ser.getSlaveServers()){
+                    if(sl.getName().equals(slave.getName())){
+                        contains = true;
+                    }
+                }
+                //se non c'è lo aggiungo e controllo la consistenza
+                if(!contains) {
+                    ser.getSlaveServers().add(slave);
+                    ser.reloadFileSystemTree();
+                    //devo rendere il server consistente
+                    ser.consistency_check();
+                    //esco dal ciclo perchè mi sono riconnesso
+                }
                 break;
 
             } catch (ConnectIOException e) {
