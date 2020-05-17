@@ -189,14 +189,24 @@ gli script .sh).
 
 # Screenshots
 
+## Client
+
 ![Alt text](./Img/screenshots/sview.png)
 
 ![Alt text](./Img/screenshots/help.png)
 
 ![Alt text](./Img/screenshots/ll.png)
 
-![Alt text](./Img/screenshots/faultTollerance1.png)
+#### Fault Tollerance
 
 ![Alt text](./Img/screenshots/faultTollerance2.png)
 
 ![Alt text](./Img/screenshots/faultTollerance3.png)
+
+## ServerManager
+
+![Alt text](./Img/screenshots/faultTollerance1.png)
+
+## Data Node
+
+![Alt_text](./Img/screenshots/DataNode.png)
