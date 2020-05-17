@@ -1,8 +1,6 @@
 
 
-2) GUI (??)
-3) data replication
-4) dividere main e classe in due file separati (es serverManagerMain, serverManager)
+1) GUI (??)
+2) Porting su Windows
 
-- documentare codice
-- scrivere relazione su architettura
+
