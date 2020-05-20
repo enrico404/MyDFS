@@ -150,6 +150,7 @@ public class ClientClass implements Serializable {
         return ip;
     }
 
+
     /**
      * Metodo per la stampa dei file/directory nel cluster relativi al path corrente del client.
      * Si è deciso di non calcolare in tempo reale la dimensione delle directory poichè ralllenterebbe troppo il tempo

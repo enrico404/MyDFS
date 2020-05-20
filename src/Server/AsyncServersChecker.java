@@ -1,5 +1,6 @@
 package Server;
 
+import Client.ClientClass;
 import utils.utils;
 
 import java.rmi.*;
